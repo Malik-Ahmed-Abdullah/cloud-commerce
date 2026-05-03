@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CloudCommerce Dashboard</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #f5f5f5; }
+    h1 { color: #333; }
+    h2 { color: #555; border-bottom: 2px solid #ddd; padding-bottom: 8px; }
+    input, button { padding: 8px 12px; margin: 5px; border-radius: 4px; border: 1px solid #ccc; }
+    button { background: #4CAF50; color: white; border: none; cursor: pointer; }
+    button:hover { background: #45a049; }
+    pre { background: #222; color: #0f0; padding: 15px; border-radius: 6px; overflow-x: auto; }
+    .section { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .token-box { background: #fff3cd; padding: 10px; border-radius: 4px; word-break: break-all; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>☁️ CloudCommerce Dashboard</h1>
+
+  <div class="section">
+    <h2>Register User</h2>
+    <input id="reg-username" placeholder="Username">
+    <input id="reg-email" placeholder="Email">
+    <input id="reg-password" placeholder="Password" type="password">
+    <button onclick="registerUser()">Register</button>
+    <pre id="reg-result"></pre>
+  </div>
+
+  <div class="section">
+    <h2>Login</h2>
+    <input id="login-username" placeholder="Username">
+    <input id="login-password" placeholder="Password" type="password">
+    <button onclick="loginUser()">Login</button>
+    <div class="token-box" id="token-display">No token yet — login first</div>
+  </div>
+
+  <div class="section">
+    <h2>Add Product</h2>
+    <input id="prod-name" placeholder="Product name">
+    <input id="prod-desc" placeholder="Description">
+    <input id="prod-price" placeholder="Price" type="number">
+    <input id="prod-stock" placeholder="Stock" type="number">
+    <button onclick="addProduct()">Add Product</button>
+    <pre id="prod-result"></pre>
+  </div>
+
+  <div class="section">
+    <h2>All Products</h2>
+    <button onclick="listProducts()">Refresh Products</button>
+    <pre id="products-list"></pre>
+  </div>
+
+  <div class="section">
+    <h2>Place Order</h2>
+    <input id="order-user" placeholder="User ID" type="number">
+    <input id="order-product" placeholder="Product ID" type="number">
+    <input id="order-qty" placeholder="Quantity" type="number" value="1">
+    <button onclick="placeOrder()">Place Order</button>
+    <pre id="order-result"></pre>
+  </div>
+
+  <div class="section">
+    <h2>All Orders</h2>
+    <button onclick="listOrders()">Refresh Orders</button>
+    <pre id="orders-list"></pre>
+  </div>
+
+  <script>
+    let authToken = "";
+
+    async function registerUser() {
+      const res = await fetch("http://localhost:5001/users/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: document.getElementById("reg-username").value,
+          email: document.getElementById("reg-email").value,
+          password: document.getElementById("reg-password").value
+        })
+      });
+      const data = await res.json();
+      document.getElementById("reg-result").textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function loginUser() {
+      const res = await fetch("http://localhost:5001/users/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: document.getElementById("login-username").value,
+          password: document.getElementById("login-password").value
+        })
+      });
+      const data = await res.json();
+      if (data.token) {
+        authToken = data.token;
+        document.getElementById("token-display").textContent = "Token: " + authToken;
+      } else {
+        document.getElementById("token-display").textContent = JSON.stringify(data);
+      }
+    }
+
+    async function addProduct() {
+      const res = await fetch("http://localhost:5002/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: document.getElementById("prod-name").value,
+          description: document.getElementById("prod-desc").value,
+          price: parseFloat(document.getElementById("prod-price").value),
+          stock: parseInt(document.getElementById("prod-stock").value)
+        })
+      });
+      const data = await res.json();
+      document.getElementById("prod-result").textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function listProducts() {
+      const res = await fetch("http://localhost:5002/products");
+      const data = await res.json();
+      document.getElementById("products-list").textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function placeOrder() {
+      const res = await fetch("http://localhost:5003/orders", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + authToken
+        },
+        body: JSON.stringify({
+          user_id: parseInt(document.getElementById("order-user").value),
+          product_id: parseInt(document.getElementById("order-product").value),
+          quantity: parseInt(document.getElementById("order-qty").value)
+        })
+      });
+      const data = await res.json();
+      document.getElementById("order-result").textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function listOrders() {
+      const res = await fetch("http://localhost:5003/orders");
+      const data = await res.json();
+      document.getElementById("orders-list").textContent = JSON.stringify(data, null, 2);
+    }
+
+    // Load products on page load
+    listProducts();
+    listOrders();
+  </script>
+</body>
+</html>
