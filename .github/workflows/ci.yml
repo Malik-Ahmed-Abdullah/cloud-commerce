@@ -1,0 +1,54 @@
+name: CloudCommerce CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build all services
+        run: docker compose build
+
+      - name: Start all services
+        run: docker compose up -d
+
+      - name: Wait for services to be ready
+        run: sleep 15
+
+      - name: Test user-service health
+        run: curl -f http://localhost:5001/health
+
+      - name: Test product-service health
+        run: curl -f http://localhost:5002/health
+
+      - name: Test order-service health
+        run: curl -f http://localhost:5003/health
+
+      - name: Test payment-service health
+        run: curl -f http://localhost:5004/health
+
+      - name: Register a test user
+        run: |
+          curl -f -X POST http://localhost:5001/users/register \
+            -H "Content-Type: application/json" \
+            -d '{"username": "testuser", "email": "test@test.com", "password": "test123"}'
+
+      - name: Add a test product
+        run: |
+          curl -f -X POST http://localhost:5002/products \
+            -H "Content-Type: application/json" \
+            -d '{"name": "Test Product", "description": "CI test", "price": 9.99, "stock": 10}'
+
+      - name: Tear down
+        run: docker compose down -v

@@ -99,28 +99,6 @@ def register():
     except psycopg2.errors.UniqueViolation:
         return jsonify({"error": "Username or email already exists"}), 409
 
-@app.route('/users/login', methods=['POST'])
-def login():
-    data = request.json
-    username = data.get('username')
-    password = data.get('password')
-
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT id, password FROM users WHERE username = %s", (username,))
-    row = cur.fetchone()
-    cur.close()
-    conn.close()
-
-    if not row:
-        return jsonify({"error": "Invalid username or password"}), 401
-
-    user_id, hashed = row
-    if bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8')):
-        return jsonify({"message": "Login successful", "user_id": user_id}), 200
-    else:
-        return jsonify({"error": "Invalid username or password"}), 401
-
 @app.route('/users/<int:user_id>', methods=['GET'])
 def get_user(user_id):
     conn = get_db()

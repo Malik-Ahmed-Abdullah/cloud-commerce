@@ -94,20 +94,6 @@ def add_product():
     redis_client.delete('products_list')
     return jsonify({"message": "Product added", "product_id": product_id}), 201
 
-@app.route('/products', methods=['GET'])
-def list_products():
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT id, name, description, price, stock FROM products")
-    rows = cur.fetchall()
-    cur.close()
-    conn.close()
-    products = [
-        {"id": r[0], "name": r[1], "description": r[2], "price": float(r[3]), "stock": r[4]}
-        for r in rows
-    ]
-    return jsonify(products), 200
-
 @app.route('/products/<int:product_id>', methods=['GET'])
 def get_product(product_id):
     conn = get_db()

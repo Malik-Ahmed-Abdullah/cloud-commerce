@@ -8,6 +8,6 @@ RUN apt-get update && apt-get install -y curl   # add this line
 
 COPY app.py .
 
-EXPOSE 5002   # (5001 and 5003 for the other two)
+EXPOSE 5002   
 
 CMD ["python", "app.py"]

@@ -2,152 +2,1082 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>CloudCommerce Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CloudCommerce</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #f5f5f5; }
-    h1 { color: #333; }
-    h2 { color: #555; border-bottom: 2px solid #ddd; padding-bottom: 8px; }
-    input, button { padding: 8px 12px; margin: 5px; border-radius: 4px; border: 1px solid #ccc; }
-    button { background: #4CAF50; color: white; border: none; cursor: pointer; }
-    button:hover { background: #45a049; }
-    pre { background: #222; color: #0f0; padding: 15px; border-radius: 6px; overflow-x: auto; }
-    .section { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .token-box { background: #fff3cd; padding: 10px; border-radius: 4px; word-break: break-all; margin-top: 10px; }
+    :root {
+      --bg: #0a0a0f;
+      --surface: #12121a;
+      --surface2: #1a1a26;
+      --border: #ffffff0f;
+      --accent: #7c6aff;
+      --accent2: #ff6a9e;
+      --accent3: #6affcc;
+      --text: #e8e8f0;
+      --text-muted: #6b6b80;
+      --success: #6affcc;
+      --error: #ff6a6a;
+      --warning: #ffcc6a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Syne', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── LOADING SCREEN ── */
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 32px;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    #loader.hidden { opacity: 0; visibility: hidden; }
+
+    .loader-logo {
+      font-size: 2.4rem;
+      font-weight: 800;
+      letter-spacing: -1px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .loader-logo span {
+      color: var(--accent3);
+      -webkit-text-fill-color: var(--accent3);
+    }
+
+    .loader-subtitle {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .loader-bar-wrap {
+      width: 280px;
+      height: 3px;
+      background: var(--surface2);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .loader-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+      border-radius: 99px;
+      animation: loadBar 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes loadBar {
+      0%   { width: 0%; }
+      30%  { width: 45%; }
+      60%  { width: 70%; }
+      85%  { width: 88%; }
+      100% { width: 100%; }
+    }
+
+    .loader-status {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      min-height: 1.2em;
+    }
+
+    /* ── APP SHELL ── */
+    #app {
+      display: flex;
+      min-height: 100vh;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    #app.visible { opacity: 1; }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 240px;
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+    }
+
+    .sidebar-logo {
+      padding: 28px 24px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-logo h1 {
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sidebar-logo p {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-top: 3px;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-section-label {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 12px 12px 6px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      font-weight: 600;
+      transition: all 0.18s ease;
+      border: 1px solid transparent;
+      text-decoration: none;
+    }
+
+    .nav-item:hover {
+      background: var(--surface2);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: #7c6aff18;
+      border-color: #7c6aff30;
+      color: var(--accent);
+    }
+
+    .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+    .sidebar-footer {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: var(--surface2);
+      border-radius: 8px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--success);
+      box-shadow: 0 0 8px var(--success);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ── MAIN CONTENT ── */
+    .main {
+      margin-left: 240px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      padding: 20px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-title { font-size: 1.1rem; font-weight: 700; }
+    .topbar-sub { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+
+    .token-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 99px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--text-muted);
+      max-width: 240px;
+      overflow: hidden;
+    }
+
+    .token-chip.has-token { border-color: #7c6aff40; color: var(--accent); }
+    .token-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
+    .token-chip.has-token .token-chip-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+    .token-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ── PAGES ── */
+    .page { display: none; padding: 32px; animation: fadeIn 0.3s ease; }
+    .page.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .page-header { margin-bottom: 28px; }
+    .page-header h2 { font-size: 1.6rem; font-weight: 800; }
+    .page-header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 4px; }
+
+    /* ── CARDS ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ── STATS ROW ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+    }
+    .stat-card:nth-child(1)::before { background: var(--accent); }
+    .stat-card:nth-child(2)::before { background: var(--accent2); }
+    .stat-card:nth-child(3)::before { background: var(--accent3); }
+    .stat-card:nth-child(4)::before { background: var(--warning); }
+
+    .stat-label { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; }
+    .stat-value { font-size: 2rem; font-weight: 800; margin-top: 8px; }
+    .stat-icon { position: absolute; top: 16px; right: 16px; font-size: 1.4rem; opacity: 0.25; }
+
+    /* ── FORM ELEMENTS ── */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-grid.single { grid-template-columns: 1fr; }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+
+    input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--text-muted); }
+
+    .btn {
+      padding: 11px 22px;
+      border-radius: 8px;
+      border: none;
+      font-family: 'Syne', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover { background: #9580ff; transform: translateY(-1px); box-shadow: 0 8px 24px #7c6aff40; }
+
+    .btn-secondary {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    .btn-danger {
+      background: #ff6a6a20;
+      color: var(--error);
+      border: 1px solid #ff6a6a30;
+    }
+
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 16px; align-items: center; }
+
+    /* ── RESPONSE BOX ── */
+    .response-box {
+      background: #0d0d16;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 16px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      line-height: 1.7;
+      color: var(--accent3);
+      white-space: pre-wrap;
+      word-break: break-all;
+      display: none;
+      max-height: 260px;
+      overflow-y: auto;
+    }
+    .response-box.visible { display: block; }
+    .response-box.error { color: var(--error); }
+    .response-box.success { color: var(--accent3); }
+
+    /* ── TABLE ── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { border-bottom: 1px solid var(--border); }
+    th {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 10px 14px;
+      text-align: left;
+    }
+    td { padding: 12px 14px; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--surface2); }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 99px;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .badge-green { background: #6affcc20; color: var(--success); border: 1px solid #6affcc30; }
+    .badge-purple { background: #7c6aff20; color: var(--accent); border: 1px solid #7c6aff30; }
+    .badge-pink { background: #ff6a9e20; color: var(--accent2); border: 1px solid #ff6a9e30; }
+    .badge-yellow { background: #ffcc6a20; color: var(--warning); border: 1px solid #ffcc6a30; }
+
+    /* ── DIVIDER ── */
+    .divider { height: 1px; background: var(--border); margin: 24px 0; }
+
+    /* ── ALERT ── */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .alert.visible { display: block; }
+    .alert-success { background: #6affcc15; border: 1px solid #6affcc30; color: var(--success); }
+    .alert-error { background: #ff6a6a15; border: 1px solid #ff6a6a30; color: var(--error); }
+    .alert-info { background: #7c6aff15; border: 1px solid #7c6aff30; color: var(--accent); }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 99px; }
+
+    /* ── LOADING SPINNER ── */
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid transparent;
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── EMPTY STATE ── */
+    .empty {
+      text-align: center;
+      padding: 48px;
+      color: var(--text-muted);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.75rem;
+    }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.4; }
   </style>
 </head>
 <body>
-  <h1>☁️ CloudCommerce Dashboard</h1>
 
-  <div class="section">
-    <h2>Register User</h2>
-    <input id="reg-username" placeholder="Username">
-    <input id="reg-email" placeholder="Email">
-    <input id="reg-password" placeholder="Password" type="password">
-    <button onclick="registerUser()">Register</button>
-    <pre id="reg-result"></pre>
+<!-- LOADING SCREEN -->
+<div id="loader">
+  <div>
+    <div class="loader-logo">Cloud<span>Commerce</span></div>
+    <div class="loader-subtitle">Microservices Platform</div>
   </div>
-
-  <div class="section">
-    <h2>Login</h2>
-    <input id="login-username" placeholder="Username">
-    <input id="login-password" placeholder="Password" type="password">
-    <button onclick="loginUser()">Login</button>
-    <div class="token-box" id="token-display">No token yet — login first</div>
+  <div style="text-align:center">
+    <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+    <div class="loader-status" id="loader-status">Initializing services...</div>
   </div>
+</div>
 
-  <div class="section">
-    <h2>Add Product</h2>
-    <input id="prod-name" placeholder="Product name">
-    <input id="prod-desc" placeholder="Description">
-    <input id="prod-price" placeholder="Price" type="number">
-    <input id="prod-stock" placeholder="Stock" type="number">
-    <button onclick="addProduct()">Add Product</button>
-    <pre id="prod-result"></pre>
+<!-- APP -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>☁ CloudCommerce</h1>
+      <p>Microservices v2.0</p>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-label">Overview</div>
+      <div class="nav-item active" onclick="navigate('dashboard', this)">
+        <span class="nav-icon">◈</span> Dashboard
+      </div>
+
+      <div class="nav-section-label">Services</div>
+      <div class="nav-item" onclick="navigate('users', this)">
+        <span class="nav-icon">◉</span> Users
+      </div>
+      <div class="nav-item" onclick="navigate('products', this)">
+        <span class="nav-icon">◈</span> Products
+      </div>
+      <div class="nav-item" onclick="navigate('orders', this)">
+        <span class="nav-icon">◇</span> Orders
+      </div>
+      <div class="nav-item" onclick="navigate('payments', this)">
+        <span class="nav-icon">◆</span> Payments
+      </div>
+
+      <div class="nav-section-label">System</div>
+      <div class="nav-item" onclick="navigate('health', this)">
+        <span class="nav-icon">◎</span> Health Check
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        All systems operational
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="topbar-title">Dashboard</div>
+        <div class="topbar-sub" id="topbar-sub">Overview of your microservices platform</div>
+      </div>
+      <div class="token-chip" id="token-chip">
+        <div class="token-chip-dot"></div>
+        <span id="token-display">No token — login required</span>
+      </div>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-header">
+        <h2>Welcome back 👋</h2>
+        <p>Real-time overview of your CloudCommerce platform</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Users</div>
+          <div class="stat-value" id="stat-users">—</div>
+          <div class="stat-icon">◉</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Products</div>
+          <div class="stat-value" id="stat-products">—</div>
+          <div class="stat-icon">◈</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Orders</div>
+          <div class="stat-value" id="stat-orders">—</div>
+          <div class="stat-icon">◇</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Services Up</div>
+          <div class="stat-value" id="stat-services">—</div>
+          <div class="stat-icon">◎</div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="card">
+          <div class="card-title">◈ Recent Orders</div>
+          <div id="dash-orders"><div class="empty"><div class="empty-icon">◇</div>Loading...</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">◈ Service Status</div>
+          <div id="dash-health"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS PAGE -->
+    <div class="page" id="page-users">
+      <div class="page-header">
+        <h2>User Management</h2>
+        <p>Register new users and manage authentication</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="card">
+          <div class="card-title">◉ Register User</div>
+          <div class="form-grid single">
+            <div class="field"><label>Username</label><input id="reg-username" placeholder="e.g. aoun123"></div>
+            <div class="field"><label>Email</label><input id="reg-email" placeholder="e.g. aoun@example.com" type="email"></div>
+            <div class="field"><label>Password</label><input id="reg-password" placeholder="Min 6 characters" type="password"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="registerUser()" id="btn-register">Register</button>
+          </div>
+          <div class="response-box" id="res-register"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">◉ Login</div>
+          <div class="form-grid single">
+            <div class="field"><label>Username</label><input id="login-username" placeholder="Your username"></div>
+            <div class="field"><label>Password</label><input id="login-password" placeholder="Your password" type="password"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="loginUser()" id="btn-login">Login & Get Token</button>
+          </div>
+          <div class="alert alert-success" id="alert-login"></div>
+          <div class="response-box" id="res-login"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">◉ Lookup User by ID</div>
+        <div style="display:flex;gap:12px;align-items:flex-end">
+          <div class="field" style="flex:1"><label>User ID</label><input id="lookup-id" placeholder="e.g. 1" type="number"></div>
+          <button class="btn btn-secondary" onclick="lookupUser()">Lookup</button>
+        </div>
+        <div class="response-box" id="res-lookup"></div>
+      </div>
+    </div>
+
+    <!-- PRODUCTS PAGE -->
+    <div class="page" id="page-products">
+      <div class="page-header">
+        <h2>Product Catalog</h2>
+        <p>Manage your product inventory</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">◈ Add New Product</div>
+        <div class="form-grid">
+          <div class="field"><label>Name</label><input id="prod-name" placeholder="Product name"></div>
+          <div class="field"><label>Price ($)</label><input id="prod-price" placeholder="0.00" type="number" step="0.01"></div>
+          <div class="field"><label>Description</label><input id="prod-desc" placeholder="Short description"></div>
+          <div class="field"><label>Stock</label><input id="prod-stock" placeholder="0" type="number"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="addProduct()">Add Product</button>
+        </div>
+        <div class="response-box" id="res-add-product"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between">
+          <span>◈ All Products</span>
+          <button class="btn btn-secondary" style="padding:6px 14px;font-size:0.78rem" onclick="loadProducts()">↻ Refresh</button>
+        </div>
+        <div class="table-wrap" id="products-table">
+          <div class="empty"><div class="empty-icon">◈</div>Loading products...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ORDERS PAGE -->
+    <div class="page" id="page-orders">
+      <div class="page-header">
+        <h2>Order Processing</h2>
+        <p>Place and track customer orders</p>
+      </div>
+
+      <div class="card">
+        <div class="alert alert-info visible" style="margin-bottom:16px">
+          ◎ You must be logged in to place an order. Login in the Users section first.
+        </div>
+        <div class="card-title">◇ Place New Order</div>
+        <div class="form-grid">
+          <div class="field"><label>User ID</label><input id="order-user" placeholder="e.g. 1" type="number"></div>
+          <div class="field"><label>Product ID</label><input id="order-product" placeholder="e.g. 1" type="number"></div>
+          <div class="field"><label>Quantity</label><input id="order-qty" placeholder="1" type="number" value="1"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="placeOrder()">Place Order</button>
+        </div>
+        <div class="response-box" id="res-place-order"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="justify-content:space-between">
+          <span>◇ All Orders</span>
+          <button class="btn btn-secondary" style="padding:6px 14px;font-size:0.78rem" onclick="loadOrders()">↻ Refresh</button>
+        </div>
+        <div class="table-wrap" id="orders-table">
+          <div class="empty"><div class="empty-icon">◇</div>Loading orders...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAYMENTS PAGE -->
+    <div class="page" id="page-payments">
+      <div class="page-header">
+        <h2>Payment Simulation</h2>
+        <p>Test the payment service directly</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div class="card">
+          <div class="card-title">◆ Charge Payment</div>
+          <div class="form-grid single">
+            <div class="field"><label>User ID</label><input id="pay-user" placeholder="e.g. 1" type="number"></div>
+            <div class="field"><label>Order ID</label><input id="pay-order" placeholder="e.g. 1" type="number"></div>
+            <div class="field"><label>Amount ($)</label><input id="pay-amount" placeholder="0.00" type="number" step="0.01"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-primary" onclick="chargePayment()">Charge</button>
+          </div>
+          <div class="response-box" id="res-charge"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">◆ Process Refund</div>
+          <div class="form-grid single">
+            <div class="field"><label>Transaction ID</label><input id="refund-txn" placeholder="e.g. TXN-123456"></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn-danger" onclick="processRefund()">Refund</button>
+          </div>
+          <div class="response-box" id="res-refund"></div>
+          <div style="margin-top:16px;padding:12px;background:var(--surface2);border-radius:8px;font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--text-muted);line-height:1.8">
+            ◎ Payment service simulates a 90% success rate.<br>
+            ◎ Failed charges return HTTP 402 Payment Required.<br>
+            ◎ Transaction IDs are formatted as TXN-XXXXXX.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HEALTH PAGE -->
+    <div class="page" id="page-health">
+      <div class="page-header">
+        <h2>Health Monitor</h2>
+        <p>Check the status of all microservices</p>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" id="health-grid">
+        <div class="empty" style="grid-column:span 2"><div class="empty-icon">◎</div>Checking services...</div>
+      </div>
+      <div class="btn-row" style="margin-top:20px">
+        <button class="btn btn-secondary" onclick="loadHealth()">↻ Refresh All</button>
+      </div>
+    </div>
   </div>
+</div>
 
-  <div class="section">
-    <h2>All Products</h2>
-    <button onclick="listProducts()">Refresh Products</button>
-    <pre id="products-list"></pre>
-  </div>
+<script>
+  let authToken = "";
+  const SERVICES = {
+    user:    "http://localhost",
+    product: "http://localhost",
+    order:   "http://localhost",
+    payment: "http://localhost"
+  };
 
-  <div class="section">
-    <h2>Place Order</h2>
-    <input id="order-user" placeholder="User ID" type="number">
-    <input id="order-product" placeholder="Product ID" type="number">
-    <input id="order-qty" placeholder="Quantity" type="number" value="1">
-    <button onclick="placeOrder()">Place Order</button>
-    <pre id="order-result"></pre>
-  </div>
+  // ── LOADER ──
+  const statusMessages = [
+    "Initializing services...",
+    "Connecting to PostgreSQL...",
+    "Warming up Redis cache...",
+    "Starting microservices...",
+    "Ready."
+  ];
 
-  <div class="section">
-    <h2>All Orders</h2>
-    <button onclick="listOrders()">Refresh Orders</button>
-    <pre id="orders-list"></pre>
-  </div>
+  let msgIdx = 0;
+  const statusEl = document.getElementById('loader-status');
+  const msgInterval = setInterval(() => {
+    msgIdx++;
+    if (msgIdx < statusMessages.length) statusEl.textContent = statusMessages[msgIdx];
+    else clearInterval(msgInterval);
+  }, 400);
 
-  <script>
-    let authToken = "";
+  setTimeout(() => {
+    document.getElementById('loader').classList.add('hidden');
+    document.getElementById('app').classList.add('visible');
+    loadDashboard();
+  }, 2200);
 
-    async function registerUser() {
-      const res = await fetch("http://localhost:5001/users/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: document.getElementById("reg-username").value,
-          email: document.getElementById("reg-email").value,
-          password: document.getElementById("reg-password").value
-        })
-      });
-      const data = await res.json();
-      document.getElementById("reg-result").textContent = JSON.stringify(data, null, 2);
-    }
+  // ── NAVIGATION ──
+  function navigate(page, el) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('page-' + page).classList.add('active');
 
-    async function loginUser() {
-      const res = await fetch("http://localhost:5001/users/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: document.getElementById("login-username").value,
-          password: document.getElementById("login-password").value
-        })
-      });
-      const data = await res.json();
-      if (data.token) {
-        authToken = data.token;
-        document.getElementById("token-display").textContent = "Token: " + authToken;
-      } else {
-        document.getElementById("token-display").textContent = JSON.stringify(data);
+    const titles = {
+      dashboard: ['Dashboard', 'Overview of your microservices platform'],
+      users:     ['User Management', 'Register, login, and manage users'],
+      products:  ['Product Catalog', 'Manage your product inventory'],
+      orders:    ['Order Processing', 'Place and track customer orders'],
+      payments:  ['Payment Simulation', 'Test the payment service'],
+      health:    ['Health Monitor', 'Check the status of all microservices']
+    };
+    document.getElementById('topbar-title').textContent = titles[page][0];
+    document.getElementById('topbar-sub').textContent = titles[page][1];
+
+    if (page === 'products') loadProducts();
+    if (page === 'orders') loadOrders();
+    if (page === 'health') loadHealth();
+    if (page === 'dashboard') loadDashboard();
+  }
+
+  // ── HELPERS ──
+  function showResponse(id, data, isError = false) {
+    const el = document.getElementById(id);
+    el.textContent = JSON.stringify(data, null, 2);
+    el.className = 'response-box visible ' + (isError ? 'error' : 'success');
+  }
+
+  async function apiFetch(url, options = {}) {
+    const res = await fetch(url, options);
+    const data = await res.json();
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  // ── DASHBOARD ──
+  async function loadDashboard() {
+    // Load stats
+    try {
+      const products = await apiFetch(`${SERVICES.product}/products`);
+      if (products.ok) document.getElementById('stat-products').textContent = products.data.length;
+    } catch {}
+    try {
+      const orders = await apiFetch(`${SERVICES.order}/orders`);
+      if (orders.ok) {
+        document.getElementById('stat-orders').textContent = orders.data.length;
+        // Recent orders
+        const recent = orders.data.slice(-5).reverse();
+        const el = document.getElementById('dash-orders');
+        if (recent.length === 0) {
+          el.innerHTML = '<div class="empty"><div class="empty-icon">◇</div>No orders yet</div>';
+        } else {
+          el.innerHTML = recent.map(o => `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+              <div>
+                <div style="font-size:0.85rem;font-weight:600">Order #${o.id}</div>
+                <div style="font-size:0.72rem;color:var(--text-muted);font-family:'Space Mono',monospace">User ${o.user_id} · Product ${o.product_id} · Qty ${o.quantity}</div>
+              </div>
+              <span class="badge badge-green">${o.status}</span>
+            </div>
+          `).join('');
+        }
       }
-    }
+    } catch {}
 
-    async function addProduct() {
-      const res = await fetch("http://localhost:5002/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+    // Health check for dashboard
+    let up = 0;
+    const healthEl = document.getElementById('dash-health');
+    const services = [
+      { name: 'User Service', url: `${SERVICES.user}/users/health`, port: '5001' },
+      { name: 'Product Service', url: `${SERVICES.product}/products/health`, port: '5002' },
+      { name: 'Order Service', url: `${SERVICES.order}/orders/health`, port: '5003' },
+      { name: 'Payment Service', url: `${SERVICES.payment}/payments/health`, port: '5004' }
+    ];
+    healthEl.innerHTML = '';
+    for (const s of services) {
+      let ok = false;
+      try { const r = await fetch(s.url); ok = r.ok; } catch {}
+      if (ok) up++;
+      healthEl.innerHTML += `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div style="width:8px;height:8px;border-radius:50%;background:${ok ? 'var(--success)' : 'var(--error)'};box-shadow:0 0 8px ${ok ? 'var(--success)' : 'var(--error)'}"></div>
+            <div>
+              <div style="font-size:0.85rem;font-weight:600">${s.name}</div>
+              <div style="font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--text-muted)">:${s.port}</div>
+            </div>
+          </div>
+          <span class="badge ${ok ? 'badge-green' : 'badge-pink'}">${ok ? 'ONLINE' : 'OFFLINE'}</span>
+        </div>`;
+    }
+    document.getElementById('stat-services').textContent = `${up}/4`;
+    document.getElementById('stat-users').textContent = '—';
+  }
+
+  // ── USERS ──
+  async function registerUser() {
+    const btn = document.getElementById('btn-register');
+    btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Registering...';
+    try {
+      const { ok, data } = await apiFetch(`${SERVICES.user}/users/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: document.getElementById("prod-name").value,
-          description: document.getElementById("prod-desc").value,
-          price: parseFloat(document.getElementById("prod-price").value),
-          stock: parseInt(document.getElementById("prod-stock").value)
+          username: document.getElementById('reg-username').value,
+          email: document.getElementById('reg-email').value,
+          password: document.getElementById('reg-password').value
         })
       });
-      const data = await res.json();
-      document.getElementById("prod-result").textContent = JSON.stringify(data, null, 2);
-    }
+      showResponse('res-register', data, !ok);
+    } catch (e) { showResponse('res-register', { error: e.message }, true); }
+    btn.disabled = false; btn.innerHTML = 'Register';
+  }
 
-    async function listProducts() {
-      const res = await fetch("http://localhost:5002/products");
-      const data = await res.json();
-      document.getElementById("products-list").textContent = JSON.stringify(data, null, 2);
-    }
+  async function loginUser() {
+    const btn = document.getElementById('btn-login');
+    btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Logging in...';
+    try {
+      const { ok, data } = await apiFetch(`${SERVICES.user}/users/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: document.getElementById('login-username').value,
+          password: document.getElementById('login-password').value
+        })
+      });
+      if (ok && data.token) {
+        authToken = data.token;
+        const chip = document.getElementById('token-chip');
+        chip.classList.add('has-token');
+        document.getElementById('token-display').textContent = authToken.substring(0, 32) + '...';
+        const alert = document.getElementById('alert-login');
+        alert.textContent = '✓ Logged in successfully — token saved';
+        alert.className = 'alert alert-success visible';
+      }
+      showResponse('res-login', data, !ok);
+    } catch (e) { showResponse('res-login', { error: e.message }, true); }
+    btn.disabled = false; btn.innerHTML = 'Login & Get Token';
+  }
 
-    async function placeOrder() {
-      const res = await fetch("http://localhost:5003/orders", {
-        method: "POST",
+  async function lookupUser() {
+    const id = document.getElementById('lookup-id').value;
+    if (!id) return;
+    try {
+      const { ok, data } = await apiFetch(`${SERVICES.user}/users/${id}`);
+      showResponse('res-lookup', data, !ok);
+    } catch (e) { showResponse('res-lookup', { error: e.message }, true); }
+  }
+
+  // ── PRODUCTS ──
+  async function loadProducts() {
+    try {
+      const { ok, data } = await apiFetch(`${SERVICES.product}/products`);
+      const el = document.getElementById('products-table');
+      if (!ok || data.length === 0) {
+        el.innerHTML = '<div class="empty"><div class="empty-icon">◈</div>No products found</div>';
+        return;
+      }
+      el.innerHTML = `<table>
+        <thead><tr><th>ID</th><th>Name</th><th>Description</th><th>Price</th><th>Stock</th></tr></thead>
+        <tbody>${data.map(p => `
+          <tr>
+            <td><span class="badge badge-purple">#${p.id}</span></td>
+            <td style="font-weight:600">${p.name}</td>
+            <td style="color:var(--text-muted)">${p.description || '—'}</td>
+            <td style="font-family:'Space Mono',monospace;color:var(--accent3)">$${p.price.toFixed(2)}</td>
+            <td><span class="badge ${p.stock > 10 ? 'badge-green' : p.stock > 0 ? 'badge-yellow' : 'badge-pink'}">${p.stock} units</span></td>
+          </tr>`).join('')}
+        </tbody></table>`;
+    } catch (e) {
+      document.getElementById('products-table').innerHTML = '<div class="empty"><div class="empty-icon">◈</div>Could not reach product service</div>';
+    }
+  }
+
+  async function addProduct() {
+    try {
+      const { ok, data } = await apiFetch(`${SERVICES.product}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: document.getElementById('prod-name').value,
+          description: document.getElementById('prod-desc').value,
+          price: parseFloat(document.getElementById('prod-price').value),
+          stock: parseInt(document.getElementById('prod-stock').value)
+        })
+      });
+      showResponse('res-add-product', data, !ok);
+      if (ok) loadProducts();
+    } catch (e) { showResponse('res-add-product', { error: e.message }, true); }
+  }
+
+  // ── ORDERS ──
+  async function loadOrders() {
+    try {
+      const { ok, data } = await apiFetch(`${SERVICES.order}/orders`);
+      const el = document.getElementById('orders-table');
+      if (!ok || data.length === 0) {
+        el.innerHTML = '<div class="empty"><div class="empty-icon">◇</div>No orders found</div>';
+        return;
+      }
+      el.innerHTML = `<table>
+        <thead><tr><th>ID</th><th>User</th><th>Product</th><th>Qty</th><th>Status</th><th>Date</th></tr></thead>
+        <tbody>${data.map(o => `
+          <tr>
+            <td><span class="badge badge-purple">#${o.id}</span></td>
+            <td>User #${o.user_id}</td>
+            <td>Product #${o.product_id}</td>
+            <td style="font-family:'Space Mono',monospace">${o.quantity}</td>
+            <td><span class="badge badge-green">${o.status}</span></td>
+            <td style="font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--text-muted)">${o.created_at ? o.created_at.substring(0,16) : '—'}</td>
+          </tr>`).join('')}
+        </tbody></table>`;
+    } catch {
+      document.getElementById('orders-table').innerHTML = '<div class="empty"><div class="empty-icon">◇</div>Could not reach order service</div>';
+    }
+  }
+
+  async function placeOrder() {
+    try {
+      const { ok, data } = await apiFetch(`${SERVICES.order}/orders`, {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + authToken
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + authToken
         },
         body: JSON.stringify({
-          user_id: parseInt(document.getElementById("order-user").value),
-          product_id: parseInt(document.getElementById("order-product").value),
-          quantity: parseInt(document.getElementById("order-qty").value)
+          user_id: parseInt(document.getElementById('order-user').value),
+          product_id: parseInt(document.getElementById('order-product').value),
+          quantity: parseInt(document.getElementById('order-qty').value)
         })
       });
-      const data = await res.json();
-      document.getElementById("order-result").textContent = JSON.stringify(data, null, 2);
-    }
+      showResponse('res-place-order', data, !ok);
+      if (ok) loadOrders();
+    } catch (e) { showResponse('res-place-order', { error: e.message }, true); }
+  }
 
-    async function listOrders() {
-      const res = await fetch("http://localhost:5003/orders");
-      const data = await res.json();
-      document.getElementById("orders-list").textContent = JSON.stringify(data, null, 2);
-    }
+  // ── PAYMENTS ──
+  async function chargePayment() {
+    try {
+      const { ok, data } = await apiFetch(`${SERVICES.payment}/payments/charge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: parseInt(document.getElementById('pay-user').value),
+          order_id: parseInt(document.getElementById('pay-order').value),
+          amount: parseFloat(document.getElementById('pay-amount').value)
+        })
+      });
+      showResponse('res-charge', data, !ok);
+    } catch (e) { showResponse('res-charge', { error: e.message }, true); }
+  }
 
-    // Load products on page load
-    listProducts();
-    listOrders();
-  </script>
+  async function processRefund() {
+    try {
+      const { ok, data } = await apiFetch(`${SERVICES.payment}/payments/refund`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transaction_id: document.getElementById('refund-txn').value })
+      });
+      showResponse('res-refund', data, !ok);
+    } catch (e) { showResponse('res-refund', { error: e.message }, true); }
+  }
+
+  // ── HEALTH ──
+  async function loadHealth() {
+    const services = [
+      { name: 'User Service', url: `${SERVICES.user}/users/health`, port: '5001', color: 'var(--accent)' },
+      { name: 'Product Service', url: `${SERVICES.product}/products/health`, port: '5002', color: 'var(--accent2)' },
+      { name: 'Order Service', url: `${SERVICES.order}/orders/health`, port: '5003', color: 'var(--accent3)' },
+      { name: 'Payment Service', url: `${SERVICES.payment}/payments/health`, port: '5004', color: 'var(--warning)' }
+    ];
+    const grid = document.getElementById('health-grid');
+    grid.innerHTML = '';
+    for (const s of services) {
+      let ok = false, msg = '';
+      try { const r = await fetch(s.url); const d = await r.json(); ok = r.ok; msg = d.status || 'OK'; } catch { msg = 'Unreachable'; }
+      grid.innerHTML += `
+        <div class="card" style="border-top:2px solid ${ok ? 'var(--success)' : 'var(--error)'}">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+            <div style="font-weight:700;font-size:1rem">${s.name}</div>
+            <span class="badge ${ok ? 'badge-green' : 'badge-pink'}">${ok ? '● ONLINE' : '● OFFLINE'}</span>
+          </div>
+          <div style="font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--text-muted);line-height:2">
+            PORT &nbsp;&nbsp; :${s.port}<br>
+            STATUS &nbsp;${msg}<br>
+            PING &nbsp;&nbsp; ${ok ? '<span style="color:var(--success)">responded OK</span>' : '<span style="color:var(--error)">no response</span>'}
+          </div>
+        </div>`;
+    }
+  }
+</script>
 </body>
 </html>
