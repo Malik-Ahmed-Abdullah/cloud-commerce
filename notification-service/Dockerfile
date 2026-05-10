@@ -4,11 +4,12 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y curl
 RUN pip install --upgrade pip
+
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 COPY app.py .
 
-EXPOSE 5004
+EXPOSE 5008
 
 CMD ["python", "app.py"]

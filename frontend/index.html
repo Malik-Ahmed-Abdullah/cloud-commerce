@@ -1,1083 +1,1245 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CloudCommerce</title>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #0a0a0f;
-      --surface: #12121a;
-      --surface2: #1a1a26;
-      --border: #ffffff0f;
-      --accent: #7c6aff;
-      --accent2: #ff6a9e;
-      --accent3: #6affcc;
-      --text: #e8e8f0;
-      --text-muted: #6b6b80;
-      --success: #6affcc;
-      --error: #ff6a6a;
-      --warning: #ffcc6a;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NimbusMart — Cloud Marketplace</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://js.stripe.com/v3/"></script>
+<style>
+:root {
+  --bg:#f7f5f0; --surface:#ffffff; --surface2:#f0ede6;
+  --border:#e5e0d5; --text:#1a1714; --muted:#8a8278;
+  --accent:#e8400a; --accent-dark:#c23208; --green:#1a6b3c;
+  --navy:#0f1f3d; --gold:#c8922a;
+  --shadow:0 2px 16px rgba(0,0,0,0.08);
+  --shadow-lg:0 8px 40px rgba(0,0,0,0.14);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+/* LOADER */
+#loader{position:fixed;inset:0;background:var(--navy);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;transition:opacity .7s ease,visibility .7s ease}
+#loader.out{opacity:0;visibility:hidden}
+.l-logo{font-family:'Bebas Neue',sans-serif;font-size:5rem;letter-spacing:4px;color:#fff;line-height:1}
+.l-logo span{color:var(--accent)}
+.l-tag{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:4px;text-transform:uppercase;color:#ffffff60}
+.l-track{width:260px;height:2px;background:#ffffff15;border-radius:99px;overflow:hidden}
+.l-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--gold));border-radius:99px;animation:lfill 2.4s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes lfill{0%{width:0}40%{width:55%}75%{width:80%}100%{width:100%}}
+.l-msg{font-family:'DM Mono',monospace;font-size:.65rem;color:#ffffff40;letter-spacing:1px}
 
-    body {
-      font-family: 'Syne', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
+/* APP */
+#app{opacity:0;transition:opacity .5s ease}
+#app.show{opacity:1}
+.view{display:none}
+.view.active{display:block}
 
-    /* ── LOADING SCREEN ── */
-    #loader {
-      position: fixed;
-      inset: 0;
-      background: var(--bg);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 32px;
-      transition: opacity 0.6s ease, visibility 0.6s ease;
-    }
-    #loader.hidden { opacity: 0; visibility: hidden; }
+/* NAV */
+.nav{background:var(--navy);position:sticky;top:0;z-index:200;box-shadow:0 2px 20px rgba(0,0,0,.2)}
+.nav-inner{max-width:1400px;margin:0 auto;display:flex;align-items:center;padding:0 24px;height:64px;gap:20px}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:2px;color:#fff;cursor:pointer;flex-shrink:0}
+.nav-logo span{color:var(--accent)}
+.nav-search{flex:1;max-width:520px;display:flex;border-radius:8px;overflow:hidden;border:1px solid #ffffff20;background:#ffffff12}
+.nav-search input{flex:1;padding:9px 14px;background:transparent;border:none;color:#fff;font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none}
+.nav-search input::placeholder{color:#ffffff50}
+.nav-search button{padding:9px 16px;background:var(--accent);border:none;color:#fff;cursor:pointer;font-size:1rem;transition:background .2s}
+.nav-search button:hover{background:var(--accent-dark)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.nav-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;background:transparent;border:1px solid #ffffff25;color:#ffffffcc;font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;transition:all .2s;white-space:nowrap}
+.nav-btn:hover{background:#ffffff15;color:#fff}
+.nav-btn.red{background:var(--accent);border-color:var(--accent);color:#fff}
+.nav-btn.red:hover{background:var(--accent-dark)}
+.cbadge{background:var(--gold);color:var(--navy);font-size:.6rem;font-weight:700;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.nav-user{display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:8px;background:#ffffff12;border:1px solid #ffffff20;cursor:default}
+.nav-user-avatar{width:28px;height:28px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff}
+.nav-user-name{font-size:.8rem;color:#ffffffcc;font-weight:500}
 
-    .loader-logo {
-      font-size: 2.4rem;
-      font-weight: 800;
-      letter-spacing: -1px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+/* HERO */
+.hero{background:var(--navy);padding:80px 24px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 100%,#e8400a18,transparent);pointer-events:none}
+.hero>*{position:relative;z-index:1}
+.hero-eye{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+.hero h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(3.5rem,8vw,6.5rem);line-height:.95;color:#fff;letter-spacing:2px;margin-bottom:20px}
+.hero h1 em{color:var(--accent);font-style:normal}
+.hero p{color:#ffffff80;font-size:1rem;max-width:480px;margin:0 auto 32px;line-height:1.6}
+.hero-btns{display:flex;gap:12px;justify-content:center}
+.btn-hp{padding:13px 32px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-hp:hover{background:var(--accent-dark);transform:translateY(-2px);box-shadow:0 8px 24px #e8400a40}
+.btn-hs{padding:13px 32px;background:transparent;color:#fff;border:1px solid #ffffff40;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-hs:hover{border-color:#fff;background:#ffffff10}
 
-    .loader-logo span {
-      color: var(--accent3);
-      -webkit-text-fill-color: var(--accent3);
-    }
+/* CATS */
+.cat-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;overflow-x:auto}
+.cat-bar::-webkit-scrollbar{display:none}
+.cat-inner{max-width:1400px;margin:0 auto;display:flex;gap:4px;padding:10px 0}
+.cat-pill{padding:6px 16px;border-radius:99px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;white-space:nowrap;transition:all .18s;flex-shrink:0}
+.cat-pill:hover{border-color:var(--accent);color:var(--accent)}
+.cat-pill.active{background:var(--accent);border-color:var(--accent);color:#fff}
 
-    .loader-subtitle {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.72rem;
-      color: var(--text-muted);
-      letter-spacing: 3px;
-      text-transform: uppercase;
-    }
+/* STORE */
+.store-wrap{max-width:1400px;margin:0 auto;padding:32px 24px}
+.store-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.store-count{font-size:.85rem;color:var(--muted)}
+.store-sort{padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface);font-family:'DM Sans',sans-serif;font-size:.85rem;color:var(--text);outline:none;cursor:pointer}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px}
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;cursor:pointer;transition:all .22s;animation:cIn .4s ease both}
+.pcard:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg);border-color:#d0c8b8}
+@keyframes cIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.pimg{height:200px;background:var(--surface2);display:flex;align-items:center;justify-content:center;overflow:hidden;padding:16px;position:relative}
+.pimg img{max-height:100%;max-width:100%;object-fit:contain;transition:transform .3s}
+.pcard:hover .pimg img{transform:scale(1.06)}
+.pbadge{position:absolute;top:10px;left:10px;background:var(--accent);color:#fff;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:1px;padding:3px 8px;border-radius:4px;text-transform:uppercase}
+.pbody{padding:14px}
+.pcat{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.pname{font-size:.88rem;font-weight:500;line-height:1.4;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.prating{display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.stars{color:var(--gold);font-size:.75rem;letter-spacing:-1px}
+.rcount{font-size:.72rem;color:var(--muted)}
+.pfoot{display:flex;align-items:center;justify-content:space-between}
+.pprice{font-size:1.15rem;font-weight:600;color:var(--accent)}
+.btn-add{padding:7px 14px;background:var(--navy);color:#fff;border:none;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .18s}
+.btn-add:hover{background:var(--accent)}
+.btn-add.added{background:var(--green)}
 
-    .loader-bar-wrap {
-      width: 280px;
-      height: 3px;
-      background: var(--surface2);
-      border-radius: 99px;
-      overflow: hidden;
-    }
+/* CART DRAWER */
+.cart-ov{position:fixed;inset:0;background:#00000060;z-index:400;opacity:0;visibility:hidden;transition:all .3s}
+.cart-ov.open{opacity:1;visibility:visible}
+.cart-dr{position:fixed;top:0;right:-440px;bottom:0;width:420px;background:var(--surface);z-index:401;transition:right .35s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,.15)}
+.cart-dr.open{right:0}
+.cart-hd{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.cart-hd h3{font-size:1.1rem;font-weight:600}
+.cart-x{background:var(--surface2);border:none;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:1rem;color:var(--muted);transition:all .18s}
+.cart-x:hover{background:var(--border);color:var(--text)}
+.cart-items{flex:1;overflow-y:auto;padding:16px 24px}
+.citem{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);animation:sIn .25s ease}
+@keyframes sIn{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+.citem-img{width:64px;height:64px;border-radius:8px;background:var(--surface2);display:flex;align-items:center;justify-content:center;flex-shrink:0;padding:6px}
+.citem-img img{max-width:100%;max-height:100%;object-fit:contain}
+.citem-info{flex:1}
+.citem-name{font-size:.82rem;font-weight:500;line-height:1.3;margin-bottom:6px}
+.citem-price{font-size:.88rem;color:var(--accent);font-weight:600}
+.qty-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.qty-btn{width:26px;height:26px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);cursor:pointer;font-size:.9rem;transition:all .15s}
+.qty-btn:hover{background:var(--border)}
+.qty-n{font-family:'DM Mono',monospace;font-size:.85rem;min-width:20px;text-align:center}
+.cart-empty{text-align:center;padding:60px 24px;color:var(--muted)}
+.cart-empty-i{font-size:3rem;margin-bottom:12px;opacity:.3}
+.cart-ft{padding:20px 24px;border-top:1px solid var(--border)}
+.cart-tot{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.cart-tot-lbl{font-size:.85rem;color:var(--muted)}
+.cart-tot-amt{font-size:1.4rem;font-weight:700}
+.btn-checkout{width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-checkout:hover{background:var(--accent-dark);transform:translateY(-1px)}
+.btn-checkout:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
-    .loader-bar {
-      height: 100%;
-      width: 0%;
-      background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
-      border-radius: 99px;
-      animation: loadBar 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    }
+/* MODALS */
+.mover{position:fixed;inset:0;background:#00000070;z-index:500;display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;visibility:hidden;transition:all .3s}
+.mover.open{opacity:1;visibility:visible}
+.modal{background:var(--surface);border-radius:16px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;transform:scale(.95);transition:transform .3s;box-shadow:var(--shadow-lg)}
+.mover.open .modal{transform:scale(1)}
+.mclose{position:absolute;top:16px;right:16px;background:var(--surface2);border:none;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:1.1rem;color:var(--muted)}
+.mclose:hover{background:var(--border)}
 
-    @keyframes loadBar {
-      0%   { width: 0%; }
-      30%  { width: 45%; }
-      60%  { width: 70%; }
-      85%  { width: 88%; }
-      100% { width: 100%; }
-    }
+/* product detail */
+.pm{padding:32px;position:relative}
+.pm-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.pm-img{background:var(--surface2);border-radius:12px;display:flex;align-items:center;justify-content:center;padding:24px;min-height:260px}
+.pm-img img{max-width:100%;max-height:240px;object-fit:contain}
+.pm-cat{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.pm-name{font-size:1.2rem;font-weight:600;line-height:1.3;margin-bottom:12px}
+.pm-price{font-size:2rem;font-weight:700;color:var(--accent);margin-bottom:8px}
+.pm-stock{font-size:.8rem;color:var(--green);margin-bottom:16px}
+.pm-desc{font-size:.85rem;color:var(--muted);line-height:1.6;margin-bottom:24px}
+.btn-pm-add{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-pm-add:hover{background:var(--accent-dark)}
 
-    .loader-status {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.68rem;
-      color: var(--text-muted);
-      letter-spacing: 1px;
-      min-height: 1.2em;
-    }
+/* checkout */
+.cm{padding:36px;position:relative}
+.cm h2{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:1px;margin-bottom:4px}
+.cm>p{color:var(--muted);font-size:.85rem;margin-bottom:28px}
+.co-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.sec-lbl{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-size:.78rem;font-weight:500;color:var(--muted)}
+.field input,.field select{padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:.88rem;outline:none;transition:border-color .2s}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+#stripe-card-el{padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);margin-bottom:14px}
+.order-sum{background:var(--surface2);border-radius:12px;padding:20px}
+.order-sum h4{font-size:.9rem;font-weight:600;margin-bottom:16px}
+.sum-item{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;font-size:.82rem;margin-bottom:10px}
+.sum-item-name{color:var(--muted);flex:1}
+.sum-item-price{font-weight:600;white-space:nowrap}
+.sum-div{height:1px;background:var(--border);margin:14px 0}
+.sum-total{display:flex;justify-content:space-between;font-weight:700;font-size:1.05rem}
+.sum-note{font-size:.72rem;color:var(--muted);margin-top:12px}
+.btn-pay{width:100%;padding:15px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px}
+.btn-pay:hover{background:var(--accent-dark);transform:translateY(-1px)}
+.btn-pay:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.stripe-pw{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:12px;font-size:.7rem;color:var(--muted)}
+.pay-err{background:#ff000015;border:1px solid #ff000030;color:#c00;border-radius:8px;padding:10px 14px;font-size:.82rem;margin-top:8px;display:none}
+.pay-err.show{display:block}
+.test-card-hint{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 12px;margin-bottom:12px;line-height:1.8}
 
-    /* ── APP SHELL ── */
-    #app {
-      display: flex;
-      min-height: 100vh;
-      opacity: 0;
-      transition: opacity 0.6s ease;
-    }
-    #app.visible { opacity: 1; }
+/* confirmation */
+.conf-m{padding:48px 36px;text-align:center;position:relative}
+.conf-icon{font-size:4rem;margin-bottom:16px;animation:popIn .5s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
+.conf-m h2{font-family:'Bebas Neue',sans-serif;font-size:2.5rem;letter-spacing:1px;margin-bottom:8px}
+.conf-m>p{color:var(--muted);margin-bottom:24px}
+.conf-details{background:var(--surface2);border-radius:12px;padding:20px;text-align:left;margin-bottom:28px}
+.conf-row{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:8px}
+.conf-row:last-child{margin-bottom:0;font-weight:700;font-size:.95rem}
+.conf-row span:first-child{color:var(--muted)}
+.btn-cont{padding:13px 40px;background:var(--navy);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s;margin-right:8px}
+.btn-cont:hover{background:#1a3060}
 
-    /* ── SIDEBAR ── */
-    .sidebar {
-      width: 240px;
-      min-height: 100vh;
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      position: fixed;
-      top: 0; left: 0; bottom: 0;
-      z-index: 100;
-    }
+/* ACCOUNT PAGE */
+.acc-wrap{max-width:1000px;margin:0 auto;padding:40px 24px}
+.acc-header{display:flex;align-items:center;gap:20px;background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:28px}
+.acc-avatar{width:72px;height:72px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:2rem;color:#fff;flex-shrink:0}
+.acc-avatar span{color:var(--accent)}
+.acc-info h2{font-size:1.4rem;font-weight:700;margin-bottom:4px}
+.acc-info p{color:var(--muted);font-size:.88rem;margin-bottom:4px}
+.acc-role{display:inline-block;padding:3px 10px;border-radius:99px;font-family:'DM Mono',monospace;font-size:.65rem;font-weight:700;background:#0f1f3d12;color:var(--navy);border:1px solid #0f1f3d20}
+.acc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px}
+.acc-stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;text-align:center}
+.acc-stat-val{font-size:1.8rem;font-weight:700;color:var(--accent)}
+.acc-stat-lbl{font-size:.75rem;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.acc-section{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.acc-sec-hd{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.acc-sec-hd h3{font-size:1rem;font-weight:600}
 
-    .sidebar-logo {
-      padding: 28px 24px 24px;
-      border-bottom: 1px solid var(--border);
-    }
+/* TRACK PAGE */
+.track-wrap{max-width:640px;margin:0 auto;padding:40px 24px}
+.track-step{font-size:.75em;color:#8a8278;transition:color .4s}
+.track-step.active{color:#6366f1;font-weight:700}
+.track-step.done{color:var(--green)}
 
-    .sidebar-logo h1 {
-      font-size: 1.25rem;
-      font-weight: 800;
-      letter-spacing: -0.5px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
+/* AUTH */
+.auth-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy);padding:24px}
+.auth-box{background:var(--surface);border-radius:20px;padding:40px;width:100%;max-width:420px;box-shadow:var(--shadow-lg)}
+.auth-logo{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;color:var(--navy);margin-bottom:4px}
+.auth-logo span{color:var(--accent)}
+.auth-sub{color:var(--muted);font-size:.85rem;margin-bottom:28px}
+.auth-tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--surface2);border-radius:8px;padding:4px}
+.auth-tab{flex:1;padding:8px;border-radius:6px;border:none;background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;color:var(--muted);transition:all .2s}
+.auth-tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.auth-form{display:none}
+.auth-form.active{display:block}
+.btn-auth{width:100%;padding:13px;background:var(--navy);color:#fff;border:none;border-radius:10px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:600;cursor:pointer;transition:all .2s;margin-top:4px}
+.btn-auth:hover{background:#1a3060}
+.auth-alert{padding:10px 14px;border-radius:8px;font-size:.82rem;margin-bottom:14px;display:none}
+.auth-alert.show{display:block}
+.auth-alert.ok{background:#00800015;color:var(--green);border:1px solid #00800025}
+.auth-alert.err{background:#ff000015;color:#c00;border:1px solid #ff000025}
+.auth-divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--muted);font-size:.78rem}
+.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border)}
 
-    .sidebar-logo p {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.6rem;
-      color: var(--text-muted);
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      margin-top: 3px;
-    }
+/* ADMIN */
+.adm-nav{background:#fff;border-bottom:1px solid var(--border);padding:0 32px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200}
+.adm-nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:1px;color:var(--navy)}
+.adm-nav-logo span{color:var(--accent)}
+.adm-shell{display:flex;min-height:calc(100vh - 58px)}
+.adm-sb{width:220px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:24px 12px}
+.adm-ni{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:.88rem;font-weight:500;transition:all .18s;margin-bottom:4px}
+.adm-ni:hover{background:var(--surface2);color:var(--text)}
+.adm-ni.active{background:#0f1f3d12;color:var(--navy);font-weight:600}
+.adm-slbl{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding:12px 14px 6px}
+.adm-main{flex:1;padding:32px;background:var(--bg)}
+.ap{display:none}
+.ap.active{display:block}
+.ap-title{font-size:1.5rem;font-weight:700;margin-bottom:4px}
+.ap-sub{color:var(--muted);font-size:.85rem;margin-bottom:28px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.sbox{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;position:relative;overflow:hidden}
+.sbox::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px}
+.sbox:nth-child(1)::after{background:var(--accent)}
+.sbox:nth-child(2)::after{background:var(--gold)}
+.sbox:nth-child(3)::after{background:var(--green)}
+.sbox:nth-child(4)::after{background:var(--navy)}
+.sbox-lbl{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.sbox-val{font-size:2rem;font-weight:700}
+.sbox-sub{font-size:.75rem;color:var(--muted);margin-top:4px}
+.ac{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:24px}
+.ac-hd{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.ac-title{font-size:.95rem;font-weight:600}
+.adm-tbl{width:100%;border-collapse:collapse}
+.adm-tbl th{padding:12px 20px;text-align:left;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);background:var(--surface2);border-bottom:1px solid var(--border)}
+.adm-tbl td{padding:14px 20px;font-size:.85rem;border-bottom:1px solid var(--border)}
+.adm-tbl tr:last-child td{border-bottom:none}
+.adm-tbl tr:hover td{background:var(--surface2)}
+.badge{display:inline-block;padding:3px 10px;border-radius:99px;font-family:'DM Mono',monospace;font-size:.6rem;font-weight:700;letter-spacing:.5px}
+.b-red{background:#ff000015;color:#c00;border:1px solid #ff000025}
+.b-green{background:#00800015;color:var(--green);border:1px solid #00800025}
+.b-blue{background:#0000ff10;color:#2040c0;border:1px solid #0000ff20}
+.b-gold{background:#c8922a15;color:var(--gold);border:1px solid #c8922a30}
+.b-gray{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+.st-sel{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);font-family:'DM Mono',monospace;font-size:.7rem;cursor:pointer;outline:none}
 
-    .sidebar-nav {
-      flex: 1;
-      padding: 16px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
+/* ADMIN LOGIN */
+.adm-login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy);padding:24px;position:relative;overflow:hidden}
+.adm-login-wrap::before{content:'ADMIN';position:absolute;font-family:'Bebas Neue',sans-serif;font-size:20rem;color:#ffffff04;letter-spacing:8px;pointer-events:none;user-select:none}
+.adm-login-box{background:var(--surface);border-radius:20px;padding:40px;width:100%;max-width:400px;box-shadow:var(--shadow-lg);position:relative;z-index:1;border-top:4px solid var(--accent)}
+.adm-login-icon{font-size:2.5rem;margin-bottom:12px}
+.adm-login-box h2{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:1px;color:var(--navy);margin-bottom:4px}
+.adm-login-box p{color:var(--muted);font-size:.83rem;margin-bottom:28px}
 
-    .nav-section-label {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.58rem;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      padding: 12px 12px 6px;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      color: var(--text-muted);
-      font-size: 0.88rem;
-      font-weight: 600;
-      transition: all 0.18s ease;
-      border: 1px solid transparent;
-      text-decoration: none;
-    }
-
-    .nav-item:hover {
-      background: var(--surface2);
-      color: var(--text);
-    }
-
-    .nav-item.active {
-      background: #7c6aff18;
-      border-color: #7c6aff30;
-      color: var(--accent);
-    }
-
-    .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
-
-    .sidebar-footer {
-      padding: 16px;
-      border-top: 1px solid var(--border);
-    }
-
-    .status-badge {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 12px;
-      background: var(--surface2);
-      border-radius: 8px;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.65rem;
-      color: var(--text-muted);
-    }
-
-    .status-dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 8px var(--success);
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
-
-    /* ── MAIN CONTENT ── */
-    .main {
-      margin-left: 240px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .topbar {
-      padding: 20px 32px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: var(--surface);
-      position: sticky;
-      top: 0;
-      z-index: 50;
-    }
-
-    .topbar-title { font-size: 1.1rem; font-weight: 700; }
-    .topbar-sub { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
-
-    .token-chip {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 7px 14px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 99px;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.62rem;
-      color: var(--text-muted);
-      max-width: 240px;
-      overflow: hidden;
-    }
-
-    .token-chip.has-token { border-color: #7c6aff40; color: var(--accent); }
-    .token-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
-    .token-chip.has-token .token-chip-dot { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
-    .token-chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-    /* ── PAGES ── */
-    .page { display: none; padding: 32px; animation: fadeIn 0.3s ease; }
-    .page.active { display: block; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-
-    .page-header { margin-bottom: 28px; }
-    .page-header h2 { font-size: 1.6rem; font-weight: 800; }
-    .page-header p { color: var(--text-muted); font-size: 0.85rem; margin-top: 4px; }
-
-    /* ── CARDS ── */
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 24px;
-      margin-bottom: 20px;
-    }
-
-    .card-title {
-      font-size: 0.8rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    /* ── STATS ROW ── */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 20px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .stat-card::before {
-      content: '';
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-    }
-    .stat-card:nth-child(1)::before { background: var(--accent); }
-    .stat-card:nth-child(2)::before { background: var(--accent2); }
-    .stat-card:nth-child(3)::before { background: var(--accent3); }
-    .stat-card:nth-child(4)::before { background: var(--warning); }
-
-    .stat-label { font-family: 'Space Mono', monospace; font-size: 0.62rem; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; }
-    .stat-value { font-size: 2rem; font-weight: 800; margin-top: 8px; }
-    .stat-icon { position: absolute; top: 16px; right: 16px; font-size: 1.4rem; opacity: 0.25; }
-
-    /* ── FORM ELEMENTS ── */
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .form-grid.single { grid-template-columns: 1fr; }
-
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    .field label { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
-
-    input {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 14px;
-      color: var(--text);
-      font-family: 'Syne', sans-serif;
-      font-size: 0.88rem;
-      outline: none;
-      transition: border-color 0.2s;
-      width: 100%;
-    }
-
-    input:focus { border-color: var(--accent); }
-    input::placeholder { color: var(--text-muted); }
-
-    .btn {
-      padding: 11px 22px;
-      border-radius: 8px;
-      border: none;
-      font-family: 'Syne', sans-serif;
-      font-size: 0.88rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.18s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: white;
-    }
-    .btn-primary:hover { background: #9580ff; transform: translateY(-1px); box-shadow: 0 8px 24px #7c6aff40; }
-
-    .btn-secondary {
-      background: var(--surface2);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
-
-    .btn-danger {
-      background: #ff6a6a20;
-      color: var(--error);
-      border: 1px solid #ff6a6a30;
-    }
-
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-
-    .btn-row { display: flex; gap: 10px; margin-top: 16px; align-items: center; }
-
-    /* ── RESPONSE BOX ── */
-    .response-box {
-      background: #0d0d16;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 16px;
-      margin-top: 16px;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.72rem;
-      line-height: 1.7;
-      color: var(--accent3);
-      white-space: pre-wrap;
-      word-break: break-all;
-      display: none;
-      max-height: 260px;
-      overflow-y: auto;
-    }
-    .response-box.visible { display: block; }
-    .response-box.error { color: var(--error); }
-    .response-box.success { color: var(--accent3); }
-
-    /* ── TABLE ── */
-    .table-wrap { overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; }
-    thead tr { border-bottom: 1px solid var(--border); }
-    th {
-      font-family: 'Space Mono', monospace;
-      font-size: 0.6rem;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      padding: 10px 14px;
-      text-align: left;
-    }
-    td { padding: 12px 14px; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: var(--surface2); }
-
-    .badge {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 99px;
-      font-family: 'Space Mono', monospace;
-      font-size: 0.6rem;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-    }
-    .badge-green { background: #6affcc20; color: var(--success); border: 1px solid #6affcc30; }
-    .badge-purple { background: #7c6aff20; color: var(--accent); border: 1px solid #7c6aff30; }
-    .badge-pink { background: #ff6a9e20; color: var(--accent2); border: 1px solid #ff6a9e30; }
-    .badge-yellow { background: #ffcc6a20; color: var(--warning); border: 1px solid #ffcc6a30; }
-
-    /* ── DIVIDER ── */
-    .divider { height: 1px; background: var(--border); margin: 24px 0; }
-
-    /* ── ALERT ── */
-    .alert {
-      padding: 12px 16px;
-      border-radius: 8px;
-      font-size: 0.82rem;
-      margin-bottom: 16px;
-      display: none;
-    }
-    .alert.visible { display: block; }
-    .alert-success { background: #6affcc15; border: 1px solid #6affcc30; color: var(--success); }
-    .alert-error { background: #ff6a6a15; border: 1px solid #ff6a6a30; color: var(--error); }
-    .alert-info { background: #7c6aff15; border: 1px solid #7c6aff30; color: var(--accent); }
-
-    /* ── SCROLLBAR ── */
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 99px; }
-
-    /* ── LOADING SPINNER ── */
-    .spinner {
-      width: 14px; height: 14px;
-      border: 2px solid transparent;
-      border-top-color: currentColor;
-      border-radius: 50%;
-      animation: spin 0.6s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* ── EMPTY STATE ── */
-    .empty {
-      text-align: center;
-      padding: 48px;
-      color: var(--text-muted);
-      font-family: 'Space Mono', monospace;
-      font-size: 0.75rem;
-    }
-    .empty-icon { font-size: 2.5rem; margin-bottom: 12px; opacity: 0.4; }
-  </style>
+/* UTILS */
+.spinner{width:15px;height:15px;border:2px solid transparent;border-top-color:currentColor;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn-sm{padding:6px 14px;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;border:none;transition:all .18s}
+.btn-sm-nv{background:var(--navy);color:#fff}
+.btn-sm-nv:hover{background:#1a3060}
+.btn-sm-ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-sm-ghost:hover{background:var(--surface2);color:var(--text)}
+.empty{padding:48px;text-align:center;color:var(--muted)}
+.empty-i{font-size:2.5rem;margin-bottom:12px;opacity:.3}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+</style>
 </head>
 <body>
 
-<!-- LOADING SCREEN -->
+<!-- LOADER -->
 <div id="loader">
-  <div>
-    <div class="loader-logo">Cloud<span>Commerce</span></div>
-    <div class="loader-subtitle">Microservices Platform</div>
-  </div>
+  <div class="l-logo">Nimbus<span>Mart</span></div>
+  <div class="l-tag">Cloud Marketplace Platform</div>
   <div style="text-align:center">
-    <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
-    <div class="loader-status" id="loader-status">Initializing services...</div>
+    <div class="l-track"><div class="l-fill"></div></div>
+    <div class="l-msg" id="lmsg" style="margin-top:10px">Booting microservices...</div>
   </div>
 </div>
 
-<!-- APP -->
 <div id="app">
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <h1>☁ CloudCommerce</h1>
-      <p>Microservices v2.0</p>
+
+<!-- ══ AUTH (Customer) ══ -->
+<div class="view" id="view-auth">
+  <div class="auth-wrap">
+    <div class="auth-box">
+      <div class="auth-logo">Nimbus<span>Mart</span></div>
+      <div class="auth-sub">Sign in or create an account to start shopping</div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" onclick="authTab('login')">Sign In</button>
+        <button class="auth-tab" onclick="authTab('register')">Register</button>
+      </div>
+      <div class="auth-alert" id="auth-alert"></div>
+      <div class="auth-form active" id="af-login">
+        <div class="field"><label>Username</label><input id="l-user" placeholder="Your username"></div>
+        <div class="field"><label>Password</label><input id="l-pass" type="password" placeholder="Your password" onkeyup="if(event.key==='Enter')doLogin()"></div>
+        <button class="btn-auth" onclick="doLogin()">Sign In</button>
+      </div>
+      <div class="auth-form" id="af-reg">
+        <div class="field"><label>Username</label><input id="r-user" placeholder="Choose a username"></div>
+        <div class="field"><label>Email</label><input id="r-email" type="email" placeholder="your@email.com"></div>
+        <div class="field"><label>Password</label><input id="r-pass" type="password" placeholder="Min 6 characters"></div>
+        <button class="btn-auth" onclick="doRegister()">Create Account</button>
+      </div>
+      <div class="auth-divider">or</div>
+      <button class="btn-sm btn-sm-ghost" style="width:100%;padding:10px" onclick="showView('admin-login')">⚙ Admin Dashboard Login</button>
     </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section-label">Overview</div>
-      <div class="nav-item active" onclick="navigate('dashboard', this)">
-        <span class="nav-icon">◈</span> Dashboard
-      </div>
+  </div>
+</div>
 
-      <div class="nav-section-label">Services</div>
-      <div class="nav-item" onclick="navigate('users', this)">
-        <span class="nav-icon">◉</span> Users
-      </div>
-      <div class="nav-item" onclick="navigate('products', this)">
-        <span class="nav-icon">◈</span> Products
-      </div>
-      <div class="nav-item" onclick="navigate('orders', this)">
-        <span class="nav-icon">◇</span> Orders
-      </div>
-      <div class="nav-item" onclick="navigate('payments', this)">
-        <span class="nav-icon">◆</span> Payments
-      </div>
-
-      <div class="nav-section-label">System</div>
-      <div class="nav-item" onclick="navigate('health', this)">
-        <span class="nav-icon">◎</span> Health Check
-      </div>
-    </nav>
-    <div class="sidebar-footer">
-      <div class="status-badge">
-        <div class="status-dot"></div>
-        All systems operational
-      </div>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <div class="main">
-    <div class="topbar">
-      <div>
-        <div class="topbar-title" id="topbar-title">Dashboard</div>
-        <div class="topbar-sub" id="topbar-sub">Overview of your microservices platform</div>
-      </div>
-      <div class="token-chip" id="token-chip">
-        <div class="token-chip-dot"></div>
-        <span id="token-display">No token — login required</span>
-      </div>
-    </div>
-
-    <!-- DASHBOARD PAGE -->
-    <div class="page active" id="page-dashboard">
-      <div class="page-header">
-        <h2>Welcome back 👋</h2>
-        <p>Real-time overview of your CloudCommerce platform</p>
-      </div>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Total Users</div>
-          <div class="stat-value" id="stat-users">—</div>
-          <div class="stat-icon">◉</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Products</div>
-          <div class="stat-value" id="stat-products">—</div>
-          <div class="stat-icon">◈</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Orders</div>
-          <div class="stat-value" id="stat-orders">—</div>
-          <div class="stat-icon">◇</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Services Up</div>
-          <div class="stat-value" id="stat-services">—</div>
-          <div class="stat-icon">◎</div>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-        <div class="card">
-          <div class="card-title">◈ Recent Orders</div>
-          <div id="dash-orders"><div class="empty"><div class="empty-icon">◇</div>Loading...</div></div>
-        </div>
-        <div class="card">
-          <div class="card-title">◈ Service Status</div>
-          <div id="dash-health"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- USERS PAGE -->
-    <div class="page" id="page-users">
-      <div class="page-header">
-        <h2>User Management</h2>
-        <p>Register new users and manage authentication</p>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-        <div class="card">
-          <div class="card-title">◉ Register User</div>
-          <div class="form-grid single">
-            <div class="field"><label>Username</label><input id="reg-username" placeholder="e.g. aoun123"></div>
-            <div class="field"><label>Email</label><input id="reg-email" placeholder="e.g. aoun@example.com" type="email"></div>
-            <div class="field"><label>Password</label><input id="reg-password" placeholder="Min 6 characters" type="password"></div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" onclick="registerUser()" id="btn-register">Register</button>
-          </div>
-          <div class="response-box" id="res-register"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">◉ Login</div>
-          <div class="form-grid single">
-            <div class="field"><label>Username</label><input id="login-username" placeholder="Your username"></div>
-            <div class="field"><label>Password</label><input id="login-password" placeholder="Your password" type="password"></div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" onclick="loginUser()" id="btn-login">Login & Get Token</button>
-          </div>
-          <div class="alert alert-success" id="alert-login"></div>
-          <div class="response-box" id="res-login"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">◉ Lookup User by ID</div>
-        <div style="display:flex;gap:12px;align-items:flex-end">
-          <div class="field" style="flex:1"><label>User ID</label><input id="lookup-id" placeholder="e.g. 1" type="number"></div>
-          <button class="btn btn-secondary" onclick="lookupUser()">Lookup</button>
-        </div>
-        <div class="response-box" id="res-lookup"></div>
-      </div>
-    </div>
-
-    <!-- PRODUCTS PAGE -->
-    <div class="page" id="page-products">
-      <div class="page-header">
-        <h2>Product Catalog</h2>
-        <p>Manage your product inventory</p>
-      </div>
-
-      <div class="card">
-        <div class="card-title">◈ Add New Product</div>
-        <div class="form-grid">
-          <div class="field"><label>Name</label><input id="prod-name" placeholder="Product name"></div>
-          <div class="field"><label>Price ($)</label><input id="prod-price" placeholder="0.00" type="number" step="0.01"></div>
-          <div class="field"><label>Description</label><input id="prod-desc" placeholder="Short description"></div>
-          <div class="field"><label>Stock</label><input id="prod-stock" placeholder="0" type="number"></div>
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-primary" onclick="addProduct()">Add Product</button>
-        </div>
-        <div class="response-box" id="res-add-product"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title" style="justify-content:space-between">
-          <span>◈ All Products</span>
-          <button class="btn btn-secondary" style="padding:6px 14px;font-size:0.78rem" onclick="loadProducts()">↻ Refresh</button>
-        </div>
-        <div class="table-wrap" id="products-table">
-          <div class="empty"><div class="empty-icon">◈</div>Loading products...</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ORDERS PAGE -->
-    <div class="page" id="page-orders">
-      <div class="page-header">
-        <h2>Order Processing</h2>
-        <p>Place and track customer orders</p>
-      </div>
-
-      <div class="card">
-        <div class="alert alert-info visible" style="margin-bottom:16px">
-          ◎ You must be logged in to place an order. Login in the Users section first.
-        </div>
-        <div class="card-title">◇ Place New Order</div>
-        <div class="form-grid">
-          <div class="field"><label>User ID</label><input id="order-user" placeholder="e.g. 1" type="number"></div>
-          <div class="field"><label>Product ID</label><input id="order-product" placeholder="e.g. 1" type="number"></div>
-          <div class="field"><label>Quantity</label><input id="order-qty" placeholder="1" type="number" value="1"></div>
-        </div>
-        <div class="btn-row">
-          <button class="btn btn-primary" onclick="placeOrder()">Place Order</button>
-        </div>
-        <div class="response-box" id="res-place-order"></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title" style="justify-content:space-between">
-          <span>◇ All Orders</span>
-          <button class="btn btn-secondary" style="padding:6px 14px;font-size:0.78rem" onclick="loadOrders()">↻ Refresh</button>
-        </div>
-        <div class="table-wrap" id="orders-table">
-          <div class="empty"><div class="empty-icon">◇</div>Loading orders...</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PAYMENTS PAGE -->
-    <div class="page" id="page-payments">
-      <div class="page-header">
-        <h2>Payment Simulation</h2>
-        <p>Test the payment service directly</p>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-        <div class="card">
-          <div class="card-title">◆ Charge Payment</div>
-          <div class="form-grid single">
-            <div class="field"><label>User ID</label><input id="pay-user" placeholder="e.g. 1" type="number"></div>
-            <div class="field"><label>Order ID</label><input id="pay-order" placeholder="e.g. 1" type="number"></div>
-            <div class="field"><label>Amount ($)</label><input id="pay-amount" placeholder="0.00" type="number" step="0.01"></div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" onclick="chargePayment()">Charge</button>
-          </div>
-          <div class="response-box" id="res-charge"></div>
-        </div>
-
-        <div class="card">
-          <div class="card-title">◆ Process Refund</div>
-          <div class="form-grid single">
-            <div class="field"><label>Transaction ID</label><input id="refund-txn" placeholder="e.g. TXN-123456"></div>
-          </div>
-          <div class="btn-row">
-            <button class="btn btn-danger" onclick="processRefund()">Refund</button>
-          </div>
-          <div class="response-box" id="res-refund"></div>
-          <div style="margin-top:16px;padding:12px;background:var(--surface2);border-radius:8px;font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--text-muted);line-height:1.8">
-            ◎ Payment service simulates a 90% success rate.<br>
-            ◎ Failed charges return HTTP 402 Payment Required.<br>
-            ◎ Transaction IDs are formatted as TXN-XXXXXX.
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- HEALTH PAGE -->
-    <div class="page" id="page-health">
-      <div class="page-header">
-        <h2>Health Monitor</h2>
-        <p>Check the status of all microservices</p>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" id="health-grid">
-        <div class="empty" style="grid-column:span 2"><div class="empty-icon">◎</div>Checking services...</div>
-      </div>
-      <div class="btn-row" style="margin-top:20px">
-        <button class="btn btn-secondary" onclick="loadHealth()">↻ Refresh All</button>
+<!-- ══ ADMIN LOGIN (Separate) ══ -->
+<div class="view" id="view-admin-login">
+  <div class="adm-login-wrap">
+    <div class="adm-login-box">
+      <div class="adm-login-icon">🔐</div>
+      <h2>Admin Access</h2>
+      <p>This portal is restricted to authorised NimbusMart administrators only.</p>
+      <div class="auth-alert" id="adm-login-alert"></div>
+      <div class="field"><label>Admin Username</label><input id="al-user" placeholder="Admin username" onkeyup="if(event.key==='Enter')doAdminLogin()"></div>
+      <div class="field"><label>Password</label><input id="al-pass" type="password" placeholder="Admin password" onkeyup="if(event.key==='Enter')doAdminLogin()"></div>
+      <button class="btn-auth" onclick="doAdminLogin()" style="background:var(--accent)">Access Dashboard</button>
+      <div style="margin-top:16px;text-align:center">
+        <button class="btn-sm btn-sm-ghost" onclick="showView('auth')">← Back to Store Login</button>
       </div>
     </div>
   </div>
+</div>
+
+<!-- ══ STORE ══ -->
+<div class="view" id="view-store">
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-logo" onclick="showView('store')">Nimbus<span>Mart</span></div>
+      <div class="nav-search">
+        <input id="nav-search" placeholder="Search for products..." onkeyup="if(event.key==='Enter')loadProducts()">
+        <button onclick="loadProducts()">🔍</button>
+      </div>
+      <div class="nav-right">
+        <div class="nav-user" id="nav-user-chip">
+          <div class="nav-user-avatar" id="nav-avatar">?</div>
+          <span class="nav-user-name" id="nav-username-display">Guest</span>
+        </div>
+        <button class="nav-btn" onclick="showView('account')">👤 My Account</button>
+        <button class="nav-btn" onclick="showView('track')">📦 Track</button>
+        <button class="nav-btn" onclick="openCart()">🛒 Cart <span class="cbadge" id="cbadge">0</span></button>
+        <button class="nav-btn red" onclick="signOut()">Sign Out</button>
+      </div>
+    </div>
+  </nav>
+  <div class="hero">
+    <div class="hero-eye">☁ Powered by Docker Microservices</div>
+    <h1>Shop <em>Everything</em><br>On The Cloud</h1>
+    <p>A fully distributed marketplace built on Flask, Redis, PostgreSQL, and real Stripe payments.</p>
+    <div class="hero-btns">
+      <button class="btn-hp" onclick="scrollToShop()">Shop Now →</button>
+      <button class="btn-hs" onclick="showView('account')">My Account</button>
+    </div>
+  </div>
+  <div class="cat-bar"><div class="cat-inner" id="cat-inner"></div></div>
+  <div class="store-wrap" id="store-sec">
+    <div class="store-toolbar">
+      <div class="store-count" id="store-count">Loading products...</div>
+      <select class="store-sort" onchange="sortChange(this.value)">
+        <option value="id-asc">Default</option>
+        <option value="price-asc">Price: Low → High</option>
+        <option value="price-desc">Price: High → Low</option>
+        <option value="rating-desc">Top Rated</option>
+      </select>
+    </div>
+    <div class="pgrid" id="pgrid"></div>
+  </div>
+</div>
+
+<!-- ══ ACCOUNT ══ -->
+<div class="view" id="view-account">
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-logo" onclick="showView('store')">Nimbus<span>Mart</span></div>
+      <div class="nav-right">
+        <button class="nav-btn" onclick="showView('store')">← Shop</button>
+        <button class="nav-btn" onclick="showView('track')">📦 Track</button>
+        <button class="nav-btn" onclick="openCart()">🛒 Cart <span class="cbadge" id="cbadge2">0</span></button>
+        <button class="nav-btn red" onclick="signOut()">Sign Out</button>
+      </div>
+    </div>
+  </nav>
+  <div class="acc-wrap">
+    <div class="acc-header">
+      <div class="acc-avatar" id="acc-avatar-big">?</div>
+      <div class="acc-info">
+        <h2 id="acc-name-big">Loading...</h2>
+        <p id="acc-email-big" style="color:var(--muted);font-size:.88rem"></p>
+        <p style="color:var(--muted);font-size:.78rem;margin-top:4px" id="acc-joined"></p>
+        <span class="acc-role" id="acc-role-badge">customer</span>
+      </div>
+    </div>
+    <div class="acc-stats">
+      <div class="acc-stat"><div class="acc-stat-val" id="acc-total-orders">—</div><div class="acc-stat-lbl">Orders Placed</div></div>
+      <div class="acc-stat"><div class="acc-stat-val" id="acc-total-spent">—</div><div class="acc-stat-lbl">Total Spent</div></div>
+      <div class="acc-stat"><div class="acc-stat-val" id="acc-active-orders">—</div><div class="acc-stat-lbl">Active Orders</div></div>
+    </div>
+    <div class="acc-section">
+      <div class="acc-sec-hd">
+        <h3>📦 My Orders</h3>
+        <button class="btn-sm btn-sm-nv" onclick="loadMyOrders()">↻ Refresh</button>
+      </div>
+      <div id="my-orders-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TRACK ══ -->
+<div class="view" id="view-track">
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="nav-logo" onclick="showView('store')">Nimbus<span>Mart</span></div>
+      <div class="nav-right">
+        <button class="nav-btn" onclick="showView('store')">← Shop</button>
+        <button class="nav-btn" onclick="showView('account')">👤 My Account</button>
+        <button class="nav-btn red" onclick="signOut()">Sign Out</button>
+      </div>
+    </div>
+  </nav>
+  <div class="track-wrap">
+    <h2 style="margin-bottom:8px">Track Your Order</h2>
+    <p style="color:var(--muted);margin-bottom:24px">Enter your order ID for live status updates</p>
+    <div style="display:flex;gap:12px;margin-bottom:32px">
+      <input id="track-input" type="number" placeholder="Order ID (e.g. 3)"
+        style="flex:1;padding:14px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:1em;font-family:'DM Sans',sans-serif;outline:none">
+      <button onclick="startTracking()"
+        style="padding:14px 24px;background:var(--navy);color:white;border:none;border-radius:8px;cursor:pointer;font-size:1em;font-family:'DM Sans',sans-serif;font-weight:600">
+        Track
+      </button>
+    </div>
+    <div id="track-result" style="display:none">
+      <div style="background:var(--surface);border-radius:12px;padding:24px;border:1px solid var(--border);box-shadow:var(--shadow)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <span style="color:var(--muted);font-family:'DM Mono',monospace;font-size:.8rem">ORDER #<span id="track-order-id" style="color:var(--text);font-weight:600"></span></span>
+          <span style="background:#22c55e20;color:#16a34a;padding:4px 10px;border-radius:20px;font-size:.75em;font-family:'DM Mono',monospace">● LIVE</span>
+        </div>
+        <div style="text-align:center;padding:20px 0">
+          <div id="track-status-icon" style="font-size:3em;margin-bottom:12px">⏳</div>
+          <div id="track-status-text" style="font-size:1.4em;font-weight:700"></div>
+          <div id="track-status-sub" style="color:var(--muted);margin-top:8px;font-size:.9em"></div>
+        </div>
+        <div style="margin:24px 0">
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+            <span id="step-pending" class="track-step">Pending</span>
+            <span id="step-confirmed" class="track-step">Confirmed</span>
+            <span id="step-processing" class="track-step">Processing</span>
+            <span id="step-shipped" class="track-step">Shipped</span>
+            <span id="step-delivered" class="track-step">Delivered</span>
+          </div>
+          <div style="height:4px;background:var(--border);border-radius:2px">
+            <div id="track-progress-bar" style="height:100%;background:var(--navy);border-radius:2px;transition:width .6s ease;width:0%"></div>
+          </div>
+        </div>
+        <div id="track-items" style="border-top:1px solid var(--border);padding-top:16px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ADMIN ══ -->
+<div class="view" id="view-admin">
+  <div class="adm-nav">
+    <div class="adm-nav-logo">Nimbus<span>Mart</span> <span style="font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);letter-spacing:0">/ Admin</span></div>
+    <div style="display:flex;gap:10px;align-items:center">
+      <span id="adm-logged-as" style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted)"></span>
+      <span style="font-family:'DM Mono',monospace;font-size:.65rem;background:var(--accent);color:#fff;padding:4px 10px;border-radius:99px">ADMIN</span>
+      <button class="btn-sm btn-sm-nv" onclick="adminSignOut()">Sign Out</button>
+    </div>
+  </div>
+  <div class="adm-shell">
+    <aside class="adm-sb">
+      <div class="adm-slbl">Overview</div>
+      <div class="adm-ni active" onclick="admPage('dashboard',this)"><span>◈</span> Dashboard</div>
+      <div class="adm-slbl">Manage</div>
+      <div class="adm-ni" onclick="admPage('orders',this)"><span>◇</span> Orders</div>
+      <div class="adm-ni" onclick="admPage('products',this)"><span>◉</span> Products</div>
+      <div class="adm-ni" onclick="admPage('payments',this)"><span>◆</span> Payments</div>
+      <div class="adm-slbl">System</div>
+      <div class="adm-ni" onclick="admPage('health',this)"><span>◎</span> Health</div>
+    </aside>
+    <main class="adm-main">
+      <div class="ap active" id="ap-dashboard">
+        <div class="ap-title">Dashboard</div>
+        <div class="ap-sub">Live overview of NimbusMart</div>
+        <div class="stats-row">
+          <div class="sbox"><div class="sbox-lbl">Revenue</div><div class="sbox-val" id="s-rev">—</div><div class="sbox-sub">Confirmed payments</div></div>
+          <div class="sbox"><div class="sbox-lbl">Orders</div><div class="sbox-val" id="s-ord">—</div><div class="sbox-sub">All time</div></div>
+          <div class="sbox"><div class="sbox-lbl">Products</div><div class="sbox-val" id="s-prod">—</div><div class="sbox-sub">In catalog</div></div>
+          <div class="sbox"><div class="sbox-lbl">Services</div><div class="sbox-val" id="s-svc">—</div><div class="sbox-sub">Online now</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+          <div class="ac"><div class="ac-hd"><span class="ac-title">Recent Orders</span></div><div id="d-orders"><div class="empty"><div class="empty-i">◇</div>Loading...</div></div></div>
+          <div class="ac"><div class="ac-hd"><span class="ac-title">Service Health</span></div><div id="d-health"></div></div>
+        </div>
+      </div>
+      <div class="ap" id="ap-orders">
+        <div class="ap-title">Orders</div>
+        <div class="ap-sub">Manage and update order statuses</div>
+        <div class="ac"><div class="ac-hd"><span class="ac-title">All Orders</span><button class="btn-sm btn-sm-nv" onclick="loadAdmOrders()">↻ Refresh</button></div><div id="ord-tbl"></div></div>
+      </div>
+      <div class="ap" id="ap-products">
+        <div class="ap-title">Products</div>
+        <div class="ap-sub">Manage product catalog</div>
+        <div class="ac" style="margin-bottom:24px">
+          <div class="ac-hd"><span class="ac-title">Add Product</span></div>
+          <div style="padding:20px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div class="field"><label>Name</label><input id="ap-name" placeholder="Product name"></div>
+            <div class="field"><label>Price ($)</label><input id="ap-price" type="number" placeholder="0.00"></div>
+            <div class="field"><label>Category</label><input id="ap-cat" placeholder="e.g. electronics"></div>
+            <div class="field"><label>Stock</label><input id="ap-stock" type="number" placeholder="0"></div>
+            <div class="field" style="grid-column:span 2"><label>Description</label><input id="ap-desc" placeholder="Short description"></div>
+            <div class="field" style="grid-column:span 2"><label>Image URL</label><input id="ap-img" placeholder="https://..."></div>
+            <div style="grid-column:span 2"><label style="font-size:.78rem;color:var(--muted);font-weight:500">Or upload image:</label><br><input type="file" id="admin-img-file" accept="image/*" style="margin-top:6px;font-size:.82rem"></div>
+          </div>
+          <div style="padding:0 20px 20px;display:flex;align-items:center;gap:12px">
+            <button class="btn-sm btn-sm-nv" onclick="admAddProduct()">Add Product</button>
+            <span id="ap-msg" style="font-size:.8rem;color:var(--green)"></span>
+          </div>
+        </div>
+        <div class="ac"><div class="ac-hd"><span class="ac-title">All Products</span><button class="btn-sm btn-sm-nv" onclick="loadAdmProducts()">↻ Refresh</button></div><div id="prod-tbl"></div></div>
+      </div>
+      <div class="ap" id="ap-payments">
+        <div class="ap-title">Payments</div>
+        <div class="ap-sub">Stripe transaction log</div>
+        <div class="ac"><div class="ac-hd"><span class="ac-title">Transactions</span><button class="btn-sm btn-sm-nv" onclick="loadAdmPayments()">↻ Refresh</button></div><div id="pay-tbl"></div></div>
+      </div>
+      <div class="ap" id="ap-health">
+        <div class="ap-title">Health Monitor</div>
+        <div class="ap-sub">Live status of all microservices</div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:16px" id="health-grid"></div>
+        <div style="margin-top:20px"><button class="btn-sm btn-sm-nv" onclick="loadHealth()">↻ Refresh All</button></div>
+      </div>
+    </main>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<!-- CART DRAWER -->
+<div class="cart-ov" id="cart-ov" onclick="closeCart()"></div>
+<div class="cart-dr" id="cart-dr">
+  <div class="cart-hd">
+    <h3>Your Cart <span id="cart-cnt-lbl" style="color:var(--muted);font-weight:400;font-size:.85rem"></span></h3>
+    <button class="cart-x" onclick="closeCart()">✕</button>
+  </div>
+  <div class="cart-items" id="cart-items-list"></div>
+  <div class="cart-ft">
+    <div class="cart-tot"><span class="cart-tot-lbl">Total</span><span class="cart-tot-amt" id="cart-total-amt">$0.00</span></div>
+    <button class="btn-checkout" id="btn-co" onclick="openCheckout()">Proceed to Checkout</button>
+  </div>
+</div>
+
+<!-- PRODUCT MODAL -->
+<div class="mover" id="m-product" onclick="if(event.target===this)closeM('m-product')">
+  <div class="modal"><div class="pm" id="pm-content"></div></div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div class="mover" id="m-checkout" onclick="if(event.target===this)closeM('m-checkout')">
+  <div class="modal" style="max-width:760px"><div class="cm" id="cm-content"></div></div>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="mover" id="m-confirm">
+  <div class="modal"><div class="conf-m" id="conf-content"></div></div>
 </div>
 
 <script>
-  let authToken = "";
-  const SERVICES = {
-    user:    "http://localhost",
-    product: "http://localhost",
-    order:   "http://localhost",
-    payment: "http://localhost"
+// ── CONFIG ──
+const API = { user:'', product:'', cart:'', order:'', payment:'' };
+const STRIPE_PK = 'pk_your_stripe_public_key_here';
+const FIREBASE_DB_URL = window.FIREBASE_DB_URL || '';
+
+let stripe = null;
+if (STRIPE_PK && typeof Stripe === 'function') {
+  try { stripe = Stripe(STRIPE_PK); } catch(e) { console.warn('Stripe init failed:', e); }
+}
+let cardElement = null;
+
+// ── SESSION STATE ──
+// Persisted in localStorage, restored on load
+let token = '', userId = null, username = '', userEmail = '', userRole = 'customer';
+let adminToken = '', adminUsername = '';
+let allProducts = [], curCat = 'all', curSort = 'id-asc', cachedCats = [];
+
+// ── PERSIST / RESTORE SESSION ──
+function saveSession() {
+  localStorage.setItem('nm_token', token);
+  localStorage.setItem('nm_userId', userId || '');
+  localStorage.setItem('nm_username', username);
+  localStorage.setItem('nm_email', userEmail);
+  localStorage.setItem('nm_role', userRole);
+}
+function restoreSession() {
+  token = localStorage.getItem('nm_token') || '';
+  userId = parseInt(localStorage.getItem('nm_userId')) || null;
+  username = localStorage.getItem('nm_username') || '';
+  userEmail = localStorage.getItem('nm_email') || '';
+  userRole = localStorage.getItem('nm_role') || 'customer';
+}
+function clearSession() {
+  token=''; userId=null; username=''; userEmail=''; userRole='customer';
+  localStorage.removeItem('nm_token');
+  localStorage.removeItem('nm_userId');
+  localStorage.removeItem('nm_username');
+  localStorage.removeItem('nm_email');
+  localStorage.removeItem('nm_role');
+}
+function saveAdminSession() {
+  localStorage.setItem('nm_admin_token', adminToken);
+  localStorage.setItem('nm_admin_username', adminUsername);
+}
+function restoreAdminSession() {
+  adminToken = localStorage.getItem('nm_admin_token') || '';
+  adminUsername = localStorage.getItem('nm_admin_username') || '';
+}
+function clearAdminSession() {
+  adminToken=''; adminUsername='';
+  localStorage.removeItem('nm_admin_token');
+  localStorage.removeItem('nm_admin_username');
+}
+
+const STATUS_CONFIG = {
+  'pending':           { icon:'⏳', text:'Order Placed',      sub:'Waiting for payment confirmation', progress:10,  step:'step-pending' },
+  'payment_confirmed': { icon:'💳', text:'Payment Confirmed', sub:'Your payment was successful',      progress:30,  step:'step-confirmed' },
+  'processing':        { icon:'📦', text:'Being Packed',      sub:'Your order is being prepared',     progress:55,  step:'step-processing' },
+  'shipped':           { icon:'🚚', text:'On the Way',        sub:'Your order is out for delivery',   progress:80,  step:'step-shipped' },
+  'delivered':         { icon:'✅', text:'Delivered',         sub:'Enjoy your order!',                progress:100, step:'step-delivered' },
+  'cancelled':         { icon:'❌', text:'Cancelled',         sub:'This order has been cancelled',    progress:0,   step:null },
+};
+
+// ── LOADER ──
+const msgs = ['Booting microservices...','Connecting to PostgreSQL...','Warming Redis cache...','Loading product catalog...','Ready!'];
+let mi = 0;
+const mel = document.getElementById('lmsg');
+const mint = setInterval(()=>{ if(++mi<msgs.length) mel.textContent=msgs[mi]; else clearInterval(mint); }, 480);
+
+setTimeout(()=>{
+  document.getElementById('loader').classList.add('out');
+  document.getElementById('app').classList.add('show');
+
+  // Restore sessions from localStorage
+  restoreSession();
+  restoreAdminSession();
+
+  // Route to correct view based on saved session
+  if (adminToken) {
+    document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
+    document.getElementById('view-admin').classList.add('active');
+    updateAdmNav();
+    loadAdmDashboard();
+  } else if (token && userId) {
+    updateNavUser();
+    showView('store');
+  } else {
+    authTab('login');
+    showView('auth');
+  }
+}, 2600);
+
+// ── VIEWS ──
+function showView(v) {
+  document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  if (v==='store') { loadCats(); loadProducts(); updateBadge(); }
+  if (v==='admin') { if(!adminToken){ showView('admin-login'); return; } loadAdmDashboard(); updateAdmNav(); }
+  if (v==='account') loadAccountPage();
+  if (v==='track') { /* keep existing state */ }
+}
+
+function updateNavUser() {
+  const initial = username ? username[0].toUpperCase() : '?';
+  document.getElementById('nav-avatar').textContent = initial;
+  document.getElementById('nav-username-display').textContent = username || 'Guest';
+}
+
+function updateAdmNav() {
+  const el = document.getElementById('adm-logged-as');
+  if (el) el.textContent = `Signed in as ${adminUsername}`;
+}
+
+function scrollToShop() {
+  showView('store');
+  setTimeout(()=>{ document.getElementById('store-sec')?.scrollIntoView({behavior:'smooth'}); }, 100);
+}
+
+// ── AUTH ──
+function authTab(t) {
+  document.querySelectorAll('.auth-tab').forEach((el,i)=>el.classList.toggle('active',(i===0&&t==='login')||(i===1&&t==='register')));
+  document.getElementById('af-login').classList.toggle('active',t==='login');
+  document.getElementById('af-reg').classList.toggle('active',t==='register');
+}
+function authAlert(msg, type, id='auth-alert') {
+  const el = document.getElementById(id);
+  el.textContent=msg; el.className=`auth-alert show ${type}`;
+  setTimeout(()=>el.classList.remove('show'),4000);
+}
+
+async function doLogin() {
+  const u = document.getElementById('l-user').value.trim();
+  const p = document.getElementById('l-pass').value;
+  if (!u||!p) return authAlert('Please fill all fields','err');
+  try {
+    const r = await fetch(`${API.user}/users/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});
+    const d = await r.json();
+    if (r.ok && d.token) {
+      // Block admins from using the customer login
+      if (d.role === 'admin') {
+        return authAlert('Admin accounts must use the Admin Dashboard login.','err');
+      }
+      token=d.token; userId=d.user_id; username=d.username||u; userEmail=d.email||''; userRole=d.role||'customer';
+      saveSession();
+      updateNavUser();
+      showView('store');
+    } else authAlert(d.error||'Login failed','err');
+  } catch { authAlert('Cannot reach user service','err'); }
+}
+
+async function doRegister() {
+  const u = document.getElementById('r-user').value.trim();
+  const e = document.getElementById('r-email').value.trim();
+  const p = document.getElementById('r-pass').value;
+  if (!u||!e||!p) return authAlert('Please fill all fields','err');
+  try {
+    const r = await fetch(`${API.user}/users/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,email:e,password:p})});
+    const d = await r.json();
+    if (r.ok) { authAlert('Account created! Please sign in.','ok'); authTab('login'); }
+    else authAlert(d.error||'Registration failed','err');
+  } catch { authAlert('Cannot reach user service','err'); }
+}
+
+async function doAdminLogin() {
+  const u = document.getElementById('al-user').value.trim();
+  const p = document.getElementById('al-pass').value;
+  if (!u||!p) return authAlert('Please fill all fields','err','adm-login-alert');
+  try {
+    const r = await fetch(`${API.user}/users/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,role:'admin'})});
+    const d = await r.json();
+    if (r.ok && d.token && d.role==='admin') {
+      adminToken=d.token; adminUsername=d.username||u;
+      saveAdminSession();
+      updateAdmNav();
+      // Show admin view directly (bypass showView guard since token is now set)
+      document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
+      document.getElementById('view-admin').classList.add('active');
+      loadAdmDashboard();
+      updateAdmNav();
+    } else authAlert(d.error||'Access denied','err','adm-login-alert');
+  } catch { authAlert('Cannot reach user service','err','adm-login-alert'); }
+}
+
+function signOut() {
+  clearSession();
+  if(window._trackInterval) clearInterval(window._trackInterval);
+  showView('auth');
+}
+
+function adminSignOut() {
+  clearAdminSession();
+  showView('auth');
+}
+
+// ── ACCOUNT PAGE ──
+async function loadAccountPage() {
+  if (!userId || !token) { showView('auth'); return; }
+
+  // Fill header info from saved session
+  const initial = username ? username[0].toUpperCase() : '?';
+  document.getElementById('acc-avatar-big').textContent = initial;
+  document.getElementById('acc-name-big').textContent = username;
+  document.getElementById('acc-email-big').textContent = userEmail;
+  document.getElementById('acc-role-badge').textContent = userRole;
+
+  // Fetch fresh user info
+  try {
+    const r = await fetch(`${API.user}/users/${userId}`);
+    const d = await r.json();
+    if (d.created_at) {
+      const date = new Date(d.created_at).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+      document.getElementById('acc-joined').textContent = `Member since ${date}`;
+    }
+  } catch {}
+
+  await loadMyOrders();
+}
+
+async function loadMyOrders() {
+  const el = document.getElementById('my-orders-list');
+  el.innerHTML = '<div class="empty"><div class="spinner" style="margin:0 auto"></div></div>';
+  try {
+    const r = await fetch(`${API.order}/orders`,{headers:{'Authorization':'Bearer '+token}});
+    const orders = await r.json();
+
+    // Update stats
+    const totalSpent = orders.reduce((s,o)=>s+(o.status!=='cancelled'?o.total:0),0);
+    const activeOrders = orders.filter(o=>!['delivered','cancelled'].includes(o.status)).length;
+    document.getElementById('acc-total-orders').textContent = orders.length;
+    document.getElementById('acc-total-spent').textContent = '$'+totalSpent.toFixed(2);
+    document.getElementById('acc-active-orders').textContent = activeOrders;
+
+    if (!orders.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-i">📦</div><div>No orders yet</div><div style="margin-top:12px"><button class="btn-sm btn-sm-nv" onclick="showView('store')">Start Shopping</button></div></div>`;
+      return;
+    }
+
+    el.innerHTML = `<table class="adm-tbl">
+      <thead><tr>
+        <th>Order ID</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Actions</th>
+      </tr></thead>
+      <tbody>${orders.map(o=>`<tr>
+        <td><strong>#${o.id}</strong></td>
+        <td style="color:var(--muted)">${Array.isArray(o.items)?o.items.map(i=>`${i.name.substring(0,22)}${i.name.length>22?'…':''} ×${i.quantity}`).join('<br>'):'—'}</td>
+        <td><strong>$${o.total.toFixed(2)}</strong></td>
+        <td>${sbadge(o.status)}</td>
+        <td style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted)">${o.created_at?o.created_at.substring(0,10):'—'}</td>
+        <td>
+          <button class="btn-sm btn-sm-nv" style="font-size:.72rem" onclick="trackOrder(${o.id})">📦 Track</button>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+
+    // Update second cart badge too
+    updateBadge();
+  } catch(e) {
+    el.innerHTML = '<div class="empty">Could not load orders</div>';
+  }
+}
+
+function trackOrder(id) {
+  showView('track');
+  document.getElementById('track-input').value = id;
+  startTracking();
+}
+
+// ── PRODUCTS ──
+async function loadCats() {
+  try {
+    const r = await fetch(`${API.product}/products/categories`);
+    const cats = await r.json();
+    cachedCats = Array.isArray(cats) ? cats : [];
+    const wrap = document.getElementById('cat-inner');
+    wrap.innerHTML = `<button class="cat-pill active" data-cat="all">All</button>`+
+      cachedCats.map((c,i)=>`<button class="cat-pill" data-cat-index="${i}">${cap(c)}</button>`).join('');
+    wrap.querySelectorAll('.cat-pill').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        const cat = btn.dataset.cat==='all' ? 'all' : cachedCats[Number(btn.dataset.catIndex)];
+        filterCat(cat,btn);
+      });
+    });
+  } catch {}
+}
+
+async function loadProducts() {
+  const grid = document.getElementById('pgrid');
+  grid.innerHTML = [...Array(8)].map(()=>`<div style="height:320px;background:var(--surface);border-radius:12px;border:1px solid var(--border)"></div>`).join('');
+  let url = `${API.product}/products?limit=40`;
+  if (curCat!=='all') url+=`&category=${encodeURIComponent(curCat)}`;
+  const [sf,so] = curSort.split('-');
+  url+=`&sort=${sf}&order=${so}`;
+  const s = document.getElementById('nav-search')?.value;
+  if (s) url+=`&search=${encodeURIComponent(s)}`;
+  try {
+    const r = await fetch(url);
+    allProducts = await r.json();
+    document.getElementById('store-count').textContent = `${allProducts.length} products`;
+    grid.innerHTML = allProducts.map((p,i)=>renderCard(p,i)).join('');
+  } catch {
+    grid.innerHTML='<div style="grid-column:span 4;padding:48px;text-align:center;color:var(--muted)">Could not load products</div>';
+  }
+}
+
+function renderCard(p,i) {
+  const st='★'.repeat(Math.round(p.rating))+'☆'.repeat(5-Math.round(p.rating));
+  return `<div class="pcard" style="animation-delay:${i*.04}s" onclick="openProduct(${p.id})">
+    <div class="pimg">
+      ${i<4?'<span class="pbadge">New</span>':''}
+      <img src="${p.image}" alt="${p.name}" loading="lazy" onerror="this.src='https://placehold.co/200x200?text=Product'">
+    </div>
+    <div class="pbody">
+      <div class="pcat">${p.category||'general'}</div>
+      <div class="pname">${p.name}</div>
+      <div class="prating"><span class="stars">${st}</span><span class="rcount">(${p.rating_count})</span></div>
+      <div class="pfoot">
+        <span class="pprice">$${p.price.toFixed(2)}</span>
+        <button class="btn-add" id="ab-${p.id}" onclick="event.stopPropagation();quickAdd(${p.id})">+ Add</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function filterCat(cat,el) {
+  curCat = cat==='all' ? 'all' : decodeURIComponent(cat);
+  document.querySelectorAll('.cat-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active'); loadProducts();
+}
+function sortChange(v) { curSort=v; loadProducts(); }
+function cap(s) { return s?s[0].toUpperCase()+s.slice(1):s; }
+
+// ── PRODUCT MODAL ──
+function openProduct(id) {
+  const p = allProducts.find(x=>x.id===id); if(!p) return;
+  const st='★'.repeat(Math.round(p.rating))+'☆'.repeat(5-Math.round(p.rating));
+  document.getElementById('pm-content').innerHTML=`
+    <button class="mclose" onclick="closeM('m-product')">✕</button>
+    <div class="pm-grid">
+      <div class="pm-img"><img src="${p.image}" alt="${p.name}" onerror="this.src='https://placehold.co/300x300?text=Product'"></div>
+      <div>
+        <div class="pm-cat">${p.category||'general'}</div>
+        <div class="pm-name">${p.name}</div>
+        <div class="prating" style="margin-bottom:12px"><span class="stars">${st}</span><span class="rcount" style="font-size:.78rem">&nbsp;${p.rating} · ${p.rating_count} reviews</span></div>
+        <div class="pm-price">$${p.price.toFixed(2)}</div>
+        <div class="pm-stock">${p.stock>0?`✓ ${p.stock} in stock`:'✗ Out of stock'}</div>
+        <div class="pm-desc">${p.description||'No description available.'}</div>
+        <button class="btn-pm-add" onclick="quickAdd(${p.id});closeM('m-product')">Add to Cart</button>
+      </div>
+    </div>`;
+  openM('m-product');
+}
+
+// ── CART ──
+async function getCart() {
+  if(!userId) return {items:[],total:0,count:0};
+  try { const r=await fetch(`${API.cart}/cart/${userId}`); return await r.json(); }
+  catch { return {items:[],total:0,count:0}; }
+}
+async function updateBadge() {
+  const c=await getCart();
+  const count=c.items.reduce((s,i)=>s+i.quantity,0);
+  ['cbadge','cbadge2'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=count; });
+}
+async function quickAdd(pid) {
+  if(!userId) { showView('auth'); return; }
+  const p=allProducts.find(x=>x.id===pid); if(!p) return;
+  const btn=document.getElementById(`ab-${pid}`);
+  if(btn){btn.classList.add('added');btn.textContent='✓ Added';}
+  try {
+    await fetch(`${API.cart}/cart/${userId}/add`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({product_id:p.id,name:p.name,price:p.price,image:p.image,quantity:1})});
+    updateBadge();
+  } catch {}
+  setTimeout(()=>{if(btn){btn.classList.remove('added');btn.textContent='+ Add';}},1500);
+}
+async function openCart() {
+  document.getElementById('cart-ov').classList.add('open');
+  document.getElementById('cart-dr').classList.add('open');
+  await renderCart();
+}
+function closeCart() {
+  document.getElementById('cart-ov').classList.remove('open');
+  document.getElementById('cart-dr').classList.remove('open');
+}
+async function renderCart() {
+  const cart=await getCart();
+  document.getElementById('cart-cnt-lbl').textContent=cart.count?`(${cart.count})`:'';
+  document.getElementById('cart-total-amt').textContent=`$${(cart.total||0).toFixed(2)}`;
+  document.getElementById('btn-co').disabled=!cart.items.length;
+  const el=document.getElementById('cart-items-list');
+  if(!cart.items.length){el.innerHTML=`<div class="cart-empty"><div class="cart-empty-i">🛒</div><div>Your cart is empty</div></div>`;return;}
+  el.innerHTML=cart.items.map(item=>`
+    <div class="citem">
+      <div class="citem-img"><img src="${item.image}" alt="${item.name}" onerror="this.style.display='none'"></div>
+      <div class="citem-info">
+        <div class="citem-name">${item.name}</div>
+        <div class="citem-price">$${(item.price*item.quantity).toFixed(2)}</div>
+        <div class="qty-row">
+          <button class="qty-btn" onclick="updQty(${item.product_id},${item.quantity-1})">−</button>
+          <span class="qty-n">${item.quantity}</span>
+          <button class="qty-btn" onclick="updQty(${item.product_id},${item.quantity+1})">+</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+async function updQty(pid,qty) {
+  if(!userId) return;
+  await fetch(`${API.cart}/cart/${userId}/update`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({product_id:pid,quantity:qty})});
+  renderCart(); updateBadge();
+}
+
+// ── CHECKOUT ──
+async function openCheckout() {
+  closeCart();
+  const cart=await getCart(); if(!cart.items.length) return;
+  document.getElementById('cm-content').innerHTML=`
+    <button class="mclose" onclick="closeM('m-checkout')">✕</button>
+    <h2>Checkout</h2><p>Complete your order securely powered by Stripe</p>
+    <div class="co-grid">
+      <div>
+        <div class="sec-lbl">Shipping Information</div>
+        <div class="field"><label>Full Name</label><input id="co-name" placeholder="Your full name" value="${username}"></div>
+        <div class="field"><label>Address</label><input id="co-addr" placeholder="Street address"></div>
+        <div class="field-row">
+          <div class="field"><label>City</label><input id="co-city" placeholder="City"></div>
+          <div class="field"><label>ZIP</label><input id="co-zip" placeholder="ZIP"></div>
+        </div>
+        <div class="sec-lbl" style="margin-top:20px">Payment Details</div>
+        <div class="test-card-hint">Test card: <strong>4242 4242 4242 4242</strong><br>Expiry: any future date &nbsp;·&nbsp; CVC: any 3 digits</div>
+        <div id="stripe-card-el"></div>
+        <div class="pay-err" id="pay-err"></div>
+        <button class="btn-pay" id="btn-pay" onclick="processPayment()">Pay $${cart.total.toFixed(2)}</button>
+        <div class="stripe-pw">🔒 Secured by Stripe · Test Mode</div>
+      </div>
+      <div>
+        <div class="order-sum">
+          <h4>Order Summary</h4>
+          ${cart.items.map(i=>`<div class="sum-item"><span class="sum-item-name">${i.name} × ${i.quantity}</span><span class="sum-item-price">$${(i.price*i.quantity).toFixed(2)}</span></div>`).join('')}
+          <div class="sum-div"></div>
+          <div class="sum-total"><span>Total</span><span>$${cart.total.toFixed(2)}</span></div>
+          <div class="sum-note">🔒 256-bit SSL encryption</div>
+        </div>
+      </div>
+    </div>`;
+  openM('m-checkout');
+  if(!stripe){
+    document.getElementById('pay-err').textContent='Stripe not configured.';
+    document.getElementById('pay-err').classList.add('show');
+    document.getElementById('btn-pay').disabled=true;
+    return;
+  }
+  const els=stripe.elements();
+  cardElement=els.create('card',{style:{base:{fontFamily:'DM Sans,sans-serif',fontSize:'15px',color:'#1a1714','::placeholder':{color:'#8a8278'}}}});
+  cardElement.mount('#stripe-card-el');
+}
+
+async function processPayment() {
+  if(!stripe||!cardElement) return;
+  const btn=document.getElementById('btn-pay');
+  const errEl=document.getElementById('pay-err');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Processing...';
+  errEl.classList.remove('show');
+  const name=document.getElementById('co-name').value;
+  const addr=[document.getElementById('co-addr').value,document.getElementById('co-city').value,document.getElementById('co-zip').value].filter(Boolean).join(', ');
+  if(!name||!addr){btn.disabled=false;btn.textContent='Pay';errEl.textContent='Please fill shipping fields.';errEl.classList.add('show');return;}
+  try {
+    const oRes=await fetch(`${API.order}/orders/checkout`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({shipping_address:addr})});
+    const oData=await oRes.json();
+    if(!oRes.ok) throw new Error(oData.error||'Order creation failed');
+    const {error,paymentIntent}=await stripe.confirmCardPayment(oData.client_secret,{payment_method:{card:cardElement,billing_details:{name}}});
+    if(error){errEl.textContent=error.message;errEl.classList.add('show');btn.disabled=false;btn.textContent='Try Again';return;}
+    await fetch(`${API.cart}/cart/${userId}/clear`,{method:'DELETE'});
+    updateBadge();
+    closeM('m-checkout');
+    showConfirm(oData,paymentIntent);
+  } catch(e){errEl.textContent=e.message||'Something went wrong.';errEl.classList.add('show');btn.disabled=false;btn.textContent='Retry';}
+}
+
+function showConfirm(order,payment) {
+  document.getElementById('conf-content').innerHTML=`
+    <div class="conf-icon">🎉</div>
+    <h2>Order Confirmed!</h2>
+    <p>Your payment was processed successfully via Stripe</p>
+    <div class="conf-details">
+      <div class="conf-row"><span>Order ID</span><span><strong>#${order.order_id}</strong></span></div>
+      <div class="conf-row"><span>Payment Status</span><span style="color:var(--green)">✓ Succeeded</span></div>
+      <div class="conf-row"><span>Payment ID</span><span style="font-family:'DM Mono',monospace;font-size:.75rem">${payment.id.substring(0,24)}...</span></div>
+      <div class="conf-row"><span>Total Charged</span><span>$${(payment.amount/100).toFixed(2)}</span></div>
+    </div>
+    <button class="btn-cont" onclick="closeM('m-confirm');showView('account')">View My Orders</button>
+    <button class="btn-cont" style="background:var(--surface2);color:var(--text);margin-left:8px" onclick="closeM('m-confirm')">Continue Shopping</button>`;
+  openM('m-confirm');
+}
+
+// ── MODALS ──
+function openM(id){document.getElementById(id).classList.add('open')}
+function closeM(id){document.getElementById(id).classList.remove('open')}
+
+// ── TRACKING ──
+async function startTracking() {
+  const orderId = document.getElementById('track-input').value;
+  if(!orderId) return;
+  if(window._trackInterval) clearInterval(window._trackInterval);
+  document.getElementById('track-result').style.display='block';
+  document.getElementById('track-order-id').textContent=orderId;
+  document.getElementById('track-items').innerHTML='';
+  updateTrackUI('pending',[]);
+  const url=`${FIREBASE_DB_URL}/orders/${orderId}.json`;
+  const poll=async()=>{
+    try {
+      const r=await fetch(url); const data=await r.json();
+      if(data&&data.status) updateTrackUI(data.status,data.items||[]);
+    } catch(e){console.error('Firebase poll error:',e);}
   };
+  poll();
+  window._trackInterval=setInterval(poll,3000);
+}
 
-  // ── LOADER ──
-  const statusMessages = [
-    "Initializing services...",
-    "Connecting to PostgreSQL...",
-    "Warming up Redis cache...",
-    "Starting microservices...",
-    "Ready."
-  ];
+function updateTrackUI(status,items) {
+  const cfg=STATUS_CONFIG[status]||STATUS_CONFIG['pending'];
+  document.getElementById('track-status-icon').textContent=cfg.icon;
+  document.getElementById('track-status-text').textContent=cfg.text;
+  document.getElementById('track-status-sub').textContent=cfg.sub;
+  document.getElementById('track-progress-bar').style.width=cfg.progress+'%';
+  const steps=['step-pending','step-confirmed','step-processing','step-shipped','step-delivered'];
+  const ci=steps.indexOf(cfg.step);
+  steps.forEach((id,i)=>{
+    const el=document.getElementById(id); el.className='track-step';
+    if(i<ci) el.classList.add('done');
+    else if(i===ci) el.classList.add('active');
+  });
+  const ti=document.getElementById('track-items');
+  if(items.length>0) ti.innerHTML='<p style="color:var(--muted);font-size:.85em;margin-bottom:8px">Items in this order:</p>'+items.map(i=>`<div style="color:var(--text);padding:4px 0;font-size:.9em">• ${i.name} × ${i.quantity}</div>`).join('');
+  else ti.innerHTML='';
+}
 
-  let msgIdx = 0;
-  const statusEl = document.getElementById('loader-status');
-  const msgInterval = setInterval(() => {
-    msgIdx++;
-    if (msgIdx < statusMessages.length) statusEl.textContent = statusMessages[msgIdx];
-    else clearInterval(msgInterval);
-  }, 400);
+// ── ADMIN ──
+function admPage(p,el) {
+  document.querySelectorAll('.adm-ni').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.ap').forEach(a=>a.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('ap-'+p).classList.add('active');
+  if(p==='orders') loadAdmOrders();
+  if(p==='products') loadAdmProducts();
+  if(p==='payments') loadAdmPayments();
+  if(p==='health') loadHealth();
+}
 
-  setTimeout(() => {
-    document.getElementById('loader').classList.add('hidden');
-    document.getElementById('app').classList.add('visible');
-    loadDashboard();
-  }, 2200);
+async function loadAdmDashboard() {
+  try {
+    const [prods,ords,pays]=await Promise.all([
+      fetch(`${API.product}/products`).then(r=>r.json()),
+      fetch(`${API.order}/orders`,{headers:{'Authorization':'Bearer '+adminToken}}).then(r=>r.json()),
+      fetch(`${API.payment}/payments`).then(r=>r.json()),
+    ]);
+    document.getElementById('s-prod').textContent=prods.length;
+    document.getElementById('s-ord').textContent=ords.length;
+    const rev=pays.filter(p=>p.status==='succeeded').reduce((s,p)=>s+p.amount,0);
+    document.getElementById('s-rev').textContent='$'+rev.toFixed(2);
+    const recEl=document.getElementById('d-orders');
+    if(!ords.length) recEl.innerHTML='<div class="empty"><div class="empty-i">◇</div>No orders yet</div>';
+    else recEl.innerHTML=`<table class="adm-tbl"><thead><tr><th>ID</th><th>User</th><th>Total</th><th>Status</th></tr></thead><tbody>${ords.slice(0,6).map(o=>`<tr><td><strong>#${o.id}</strong></td><td>User #${o.user_id}</td><td>$${o.total.toFixed(2)}</td><td>${sbadge(o.status)}</td></tr>`).join('')}</tbody></table>`;
+  } catch {}
 
-  // ── NAVIGATION ──
-  function navigate(page, el) {
-    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    el.classList.add('active');
-    document.getElementById('page-' + page).classList.add('active');
-
-    const titles = {
-      dashboard: ['Dashboard', 'Overview of your microservices platform'],
-      users:     ['User Management', 'Register, login, and manage users'],
-      products:  ['Product Catalog', 'Manage your product inventory'],
-      orders:    ['Order Processing', 'Place and track customer orders'],
-      payments:  ['Payment Simulation', 'Test the payment service'],
-      health:    ['Health Monitor', 'Check the status of all microservices']
-    };
-    document.getElementById('topbar-title').textContent = titles[page][0];
-    document.getElementById('topbar-sub').textContent = titles[page][1];
-
-    if (page === 'products') loadProducts();
-    if (page === 'orders') loadOrders();
-    if (page === 'health') loadHealth();
-    if (page === 'dashboard') loadDashboard();
+  let up=0;
+  const svcs=[{n:'User Service',url:'/users/health',p:'5001'},{n:'Product Service',url:'/products/health',p:'5002'},{n:'Cart Service',url:'/cart/health',p:'5005'},{n:'Order Service',url:'/orders/health',p:'5003'},{n:'Payment Service',url:'/payments/health',p:'5004'},{n:'Notification Service',url:'/notify/health',p:'5008'}];
+  const hel=document.getElementById('d-health'); hel.innerHTML='';
+  for(const s of svcs){
+    let ok=false; try{const r=await fetch(s.url);ok=r.ok;}catch{}
+    if(ok)up++;
+    hel.innerHTML+=`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-bottom:1px solid var(--border)"><div style="display:flex;align-items:center;gap:10px"><div style="width:8px;height:8px;border-radius:50%;background:${ok?'var(--green)':'#c00'}${ok?';box-shadow:0 0 6px var(--green)':''}"></div><div><div style="font-size:.85rem;font-weight:500">${s.n}</div><div style="font-family:'DM Mono',monospace;font-size:.62rem;color:var(--muted)">:${s.p}</div></div></div><span class="badge ${ok?'b-green':'b-red'}">${ok?'ONLINE':'OFFLINE'}</span></div>`;
   }
+  document.getElementById('s-svc').textContent=`${up}/${svcs.length}`;
+}
 
-  // ── HELPERS ──
-  function showResponse(id, data, isError = false) {
-    const el = document.getElementById(id);
-    el.textContent = JSON.stringify(data, null, 2);
-    el.className = 'response-box visible ' + (isError ? 'error' : 'success');
-  }
+async function loadAdmOrders() {
+  const el=document.getElementById('ord-tbl');
+  try {
+    const r=await fetch(`${API.order}/orders`,{headers:{'Authorization':'Bearer '+adminToken}});
+    const ords=await r.json();
+    if(!ords.length){el.innerHTML='<div class="empty"><div class="empty-i">◇</div>No orders</div>';return;}
+    el.innerHTML=`<table class="adm-tbl"><thead><tr><th>ID</th><th>User</th><th>Items</th><th>Total</th><th>Status</th><th>Date</th><th>Update</th></tr></thead><tbody>${ords.map(o=>`<tr><td><strong>#${o.id}</strong></td><td>User #${o.user_id}</td><td>${Array.isArray(o.items)?o.items.length+' item(s)':'—'}</td><td><strong>$${o.total.toFixed(2)}</strong></td><td>${sbadge(o.status)}</td><td style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted)">${o.created_at?o.created_at.substring(0,16):'—'}</td><td><select class="st-sel" onchange="updOrdStatus(${o.id},this.value)">${['pending','payment_confirmed','processing','shipped','delivered','cancelled'].map(s=>`<option value="${s}" ${o.status===s?'selected':''}>${s}</option>`).join('')}</select></td></tr>`).join('')}</tbody></table>`;
+  } catch{el.innerHTML='<div class="empty">Could not load orders</div>';}
+}
 
-  async function apiFetch(url, options = {}) {
-    const res = await fetch(url, options);
-    const data = await res.json();
-    return { ok: res.ok, status: res.status, data };
-  }
+async function updOrdStatus(id,status) {
+  await fetch(`${API.order}/orders/${id}/status`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status})});
+}
 
-  // ── DASHBOARD ──
-  async function loadDashboard() {
-    // Load stats
-    try {
-      const products = await apiFetch(`${SERVICES.product}/products`);
-      if (products.ok) document.getElementById('stat-products').textContent = products.data.length;
-    } catch {}
-    try {
-      const orders = await apiFetch(`${SERVICES.order}/orders`);
-      if (orders.ok) {
-        document.getElementById('stat-orders').textContent = orders.data.length;
-        // Recent orders
-        const recent = orders.data.slice(-5).reverse();
-        const el = document.getElementById('dash-orders');
-        if (recent.length === 0) {
-          el.innerHTML = '<div class="empty"><div class="empty-icon">◇</div>No orders yet</div>';
-        } else {
-          el.innerHTML = recent.map(o => `
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-              <div>
-                <div style="font-size:0.85rem;font-weight:600">Order #${o.id}</div>
-                <div style="font-size:0.72rem;color:var(--text-muted);font-family:'Space Mono',monospace">User ${o.user_id} · Product ${o.product_id} · Qty ${o.quantity}</div>
-              </div>
-              <span class="badge badge-green">${o.status}</span>
-            </div>
-          `).join('');
-        }
-      }
-    } catch {}
+async function loadAdmProducts() {
+  const el=document.getElementById('prod-tbl');
+  try {
+    const r=await fetch(`${API.product}/products?limit=100`);
+    const prods=await r.json();
+    el.innerHTML=`<table class="adm-tbl"><thead><tr><th>ID</th><th>Img</th><th>Name</th><th>Category</th><th>Price</th><th>Stock</th><th>Rating</th></tr></thead><tbody>${prods.map(p=>`<tr><td><strong>#${p.id}</strong></td><td><img src="${p.image}" style="width:40px;height:40px;object-fit:contain;border-radius:6px;background:var(--surface2);padding:4px" onerror="this.style.display='none'"></td><td style="max-width:180px"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div></td><td><span class="badge b-blue">${p.category||'—'}</span></td><td><strong>$${p.price.toFixed(2)}</strong></td><td><span class="badge ${p.stock>10?'b-green':p.stock>0?'b-gold':'b-red'}">${p.stock} units</span></td><td style="font-family:'DM Mono',monospace">${p.rating} ★</td></tr>`).join('')}</tbody></table>`;
+  } catch{el.innerHTML='<div class="empty">Could not load products</div>';}
+}
 
-    // Health check for dashboard
-    let up = 0;
-    const healthEl = document.getElementById('dash-health');
-    const services = [
-      { name: 'User Service', url: `${SERVICES.user}/users/health`, port: '5001' },
-      { name: 'Product Service', url: `${SERVICES.product}/products/health`, port: '5002' },
-      { name: 'Order Service', url: `${SERVICES.order}/orders/health`, port: '5003' },
-      { name: 'Payment Service', url: `${SERVICES.payment}/payments/health`, port: '5004' }
-    ];
-    healthEl.innerHTML = '';
-    for (const s of services) {
-      let ok = false;
-      try { const r = await fetch(s.url); ok = r.ok; } catch {}
-      if (ok) up++;
-      healthEl.innerHTML += `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:8px;height:8px;border-radius:50%;background:${ok ? 'var(--success)' : 'var(--error)'};box-shadow:0 0 8px ${ok ? 'var(--success)' : 'var(--error)'}"></div>
-            <div>
-              <div style="font-size:0.85rem;font-weight:600">${s.name}</div>
-              <div style="font-family:'Space Mono',monospace;font-size:0.62rem;color:var(--text-muted)">:${s.port}</div>
-            </div>
-          </div>
-          <span class="badge ${ok ? 'badge-green' : 'badge-pink'}">${ok ? 'ONLINE' : 'OFFLINE'}</span>
-        </div>`;
+async function admAddProduct() {
+  const msg=document.getElementById('ap-msg');
+  try {
+    let imageUrl=document.getElementById('ap-img').value;
+    const fileInput=document.getElementById('admin-img-file');
+    if(fileInput&&fileInput.files&&fileInput.files.length>0){
+      const fd=new FormData(); fd.append('file',fileInput.files[0]);
+      const up=await fetch('/products/upload-image',{method:'POST',body:fd});
+      if(up.ok){const ud=await up.json(); imageUrl=ud.url||imageUrl;}
     }
-    document.getElementById('stat-services').textContent = `${up}/4`;
-    document.getElementById('stat-users').textContent = '—';
-  }
+    const r=await fetch(`${API.product}/products`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:document.getElementById('ap-name').value,price:parseFloat(document.getElementById('ap-price').value),category:document.getElementById('ap-cat').value,stock:parseInt(document.getElementById('ap-stock').value)||0,description:document.getElementById('ap-desc').value,image:imageUrl})});
+    const d=await r.json();
+    msg.textContent=r.ok?'✓ Product added':'✗ '+(d.error||'Failed');
+    if(r.ok) loadAdmProducts();
+  } catch{msg.textContent='✗ Network error';}
+  setTimeout(()=>msg.textContent='',3000);
+}
 
-  // ── USERS ──
-  async function registerUser() {
-    const btn = document.getElementById('btn-register');
-    btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Registering...';
-    try {
-      const { ok, data } = await apiFetch(`${SERVICES.user}/users/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: document.getElementById('reg-username').value,
-          email: document.getElementById('reg-email').value,
-          password: document.getElementById('reg-password').value
-        })
-      });
-      showResponse('res-register', data, !ok);
-    } catch (e) { showResponse('res-register', { error: e.message }, true); }
-    btn.disabled = false; btn.innerHTML = 'Register';
-  }
+async function loadAdmPayments() {
+  const el=document.getElementById('pay-tbl');
+  try {
+    const r=await fetch(`${API.payment}/payments`);
+    const pays=await r.json();
+    if(!pays.length){el.innerHTML='<div class="empty"><div class="empty-i">◆</div>No transactions yet</div>';return;}
+    el.innerHTML=`<table class="adm-tbl"><thead><tr><th>ID</th><th>Stripe Intent</th><th>Amount</th><th>Currency</th><th>Status</th><th>User</th><th>Date</th></tr></thead><tbody>${pays.map(p=>`<tr><td><strong>#${p.id}</strong></td><td style="font-family:'DM Mono',monospace;font-size:.72rem">${p.stripe_payment_intent?p.stripe_payment_intent.substring(0,22)+'...':'—'}</td><td><strong>$${p.amount.toFixed(2)}</strong></td><td style="font-family:'DM Mono',monospace;text-transform:uppercase">${p.currency||'usd'}</td><td><span class="badge ${p.status==='succeeded'?'b-green':'b-red'}">${p.status}</span></td><td>User #${p.user_id||'—'}</td><td style="font-family:'DM Mono',monospace;font-size:.72rem;color:var(--muted)">${p.created_at?p.created_at.substring(0,16):'—'}</td></tr>`).join('')}</tbody></table>`;
+  } catch{el.innerHTML='<div class="empty">Could not load payments</div>';}
+}
 
-  async function loginUser() {
-    const btn = document.getElementById('btn-login');
-    btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Logging in...';
-    try {
-      const { ok, data } = await apiFetch(`${SERVICES.user}/users/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: document.getElementById('login-username').value,
-          password: document.getElementById('login-password').value
-        })
-      });
-      if (ok && data.token) {
-        authToken = data.token;
-        const chip = document.getElementById('token-chip');
-        chip.classList.add('has-token');
-        document.getElementById('token-display').textContent = authToken.substring(0, 32) + '...';
-        const alert = document.getElementById('alert-login');
-        alert.textContent = '✓ Logged in successfully — token saved';
-        alert.className = 'alert alert-success visible';
-      }
-      showResponse('res-login', data, !ok);
-    } catch (e) { showResponse('res-login', { error: e.message }, true); }
-    btn.disabled = false; btn.innerHTML = 'Login & Get Token';
+async function loadHealth() {
+  const svcs=[{n:'User Service',url:'/users/health',p:'5001'},{n:'Product Service',url:'/products/health',p:'5002'},{n:'Cart Service',url:'/cart/health',p:'5005'},{n:'Order Service',url:'/orders/health',p:'5003'},{n:'Payment Service',url:'/payments/health',p:'5004'},{n:'Notification Service',url:'/notify/health',p:'5008'}];
+  const grid=document.getElementById('health-grid'); grid.innerHTML='';
+  for(const s of svcs){
+    let ok=false,msg='';
+    try{const r=await fetch(s.url);const d=await r.json();ok=r.ok;msg=d.status||'OK';}catch{msg='Unreachable';}
+    grid.innerHTML+=`<div class="ac" style="border-top:3px solid ${ok?'var(--green)':'#c00'}"><div style="padding:20px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><div style="font-weight:600">${s.n}</div><span class="badge ${ok?'b-green':'b-red'}">${ok?'ONLINE':'OFFLINE'}</span></div><div style="font-family:'DM Mono',monospace;font-size:.65rem;color:var(--muted);line-height:2.2">PORT &nbsp;&nbsp; :${s.p}<br>STATUS &nbsp;${msg}<br>PING &nbsp;&nbsp; ${ok?'<span style="color:var(--green)">OK</span>':'<span style="color:#c00">FAILED</span>'}</div></div></div>`;
   }
+}
 
-  async function lookupUser() {
-    const id = document.getElementById('lookup-id').value;
-    if (!id) return;
-    try {
-      const { ok, data } = await apiFetch(`${SERVICES.user}/users/${id}`);
-      showResponse('res-lookup', data, !ok);
-    } catch (e) { showResponse('res-lookup', { error: e.message }, true); }
-  }
-
-  // ── PRODUCTS ──
-  async function loadProducts() {
-    try {
-      const { ok, data } = await apiFetch(`${SERVICES.product}/products`);
-      const el = document.getElementById('products-table');
-      if (!ok || data.length === 0) {
-        el.innerHTML = '<div class="empty"><div class="empty-icon">◈</div>No products found</div>';
-        return;
-      }
-      el.innerHTML = `<table>
-        <thead><tr><th>ID</th><th>Name</th><th>Description</th><th>Price</th><th>Stock</th></tr></thead>
-        <tbody>${data.map(p => `
-          <tr>
-            <td><span class="badge badge-purple">#${p.id}</span></td>
-            <td style="font-weight:600">${p.name}</td>
-            <td style="color:var(--text-muted)">${p.description || '—'}</td>
-            <td style="font-family:'Space Mono',monospace;color:var(--accent3)">$${p.price.toFixed(2)}</td>
-            <td><span class="badge ${p.stock > 10 ? 'badge-green' : p.stock > 0 ? 'badge-yellow' : 'badge-pink'}">${p.stock} units</span></td>
-          </tr>`).join('')}
-        </tbody></table>`;
-    } catch (e) {
-      document.getElementById('products-table').innerHTML = '<div class="empty"><div class="empty-icon">◈</div>Could not reach product service</div>';
-    }
-  }
-
-  async function addProduct() {
-    try {
-      const { ok, data } = await apiFetch(`${SERVICES.product}/products`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: document.getElementById('prod-name').value,
-          description: document.getElementById('prod-desc').value,
-          price: parseFloat(document.getElementById('prod-price').value),
-          stock: parseInt(document.getElementById('prod-stock').value)
-        })
-      });
-      showResponse('res-add-product', data, !ok);
-      if (ok) loadProducts();
-    } catch (e) { showResponse('res-add-product', { error: e.message }, true); }
-  }
-
-  // ── ORDERS ──
-  async function loadOrders() {
-    try {
-      const { ok, data } = await apiFetch(`${SERVICES.order}/orders`);
-      const el = document.getElementById('orders-table');
-      if (!ok || data.length === 0) {
-        el.innerHTML = '<div class="empty"><div class="empty-icon">◇</div>No orders found</div>';
-        return;
-      }
-      el.innerHTML = `<table>
-        <thead><tr><th>ID</th><th>User</th><th>Product</th><th>Qty</th><th>Status</th><th>Date</th></tr></thead>
-        <tbody>${data.map(o => `
-          <tr>
-            <td><span class="badge badge-purple">#${o.id}</span></td>
-            <td>User #${o.user_id}</td>
-            <td>Product #${o.product_id}</td>
-            <td style="font-family:'Space Mono',monospace">${o.quantity}</td>
-            <td><span class="badge badge-green">${o.status}</span></td>
-            <td style="font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--text-muted)">${o.created_at ? o.created_at.substring(0,16) : '—'}</td>
-          </tr>`).join('')}
-        </tbody></table>`;
-    } catch {
-      document.getElementById('orders-table').innerHTML = '<div class="empty"><div class="empty-icon">◇</div>Could not reach order service</div>';
-    }
-  }
-
-  async function placeOrder() {
-    try {
-      const { ok, data } = await apiFetch(`${SERVICES.order}/orders`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ' + authToken
-        },
-        body: JSON.stringify({
-          user_id: parseInt(document.getElementById('order-user').value),
-          product_id: parseInt(document.getElementById('order-product').value),
-          quantity: parseInt(document.getElementById('order-qty').value)
-        })
-      });
-      showResponse('res-place-order', data, !ok);
-      if (ok) loadOrders();
-    } catch (e) { showResponse('res-place-order', { error: e.message }, true); }
-  }
-
-  // ── PAYMENTS ──
-  async function chargePayment() {
-    try {
-      const { ok, data } = await apiFetch(`${SERVICES.payment}/payments/charge`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: parseInt(document.getElementById('pay-user').value),
-          order_id: parseInt(document.getElementById('pay-order').value),
-          amount: parseFloat(document.getElementById('pay-amount').value)
-        })
-      });
-      showResponse('res-charge', data, !ok);
-    } catch (e) { showResponse('res-charge', { error: e.message }, true); }
-  }
-
-  async function processRefund() {
-    try {
-      const { ok, data } = await apiFetch(`${SERVICES.payment}/payments/refund`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transaction_id: document.getElementById('refund-txn').value })
-      });
-      showResponse('res-refund', data, !ok);
-    } catch (e) { showResponse('res-refund', { error: e.message }, true); }
-  }
-
-  // ── HEALTH ──
-  async function loadHealth() {
-    const services = [
-      { name: 'User Service', url: `${SERVICES.user}/users/health`, port: '5001', color: 'var(--accent)' },
-      { name: 'Product Service', url: `${SERVICES.product}/products/health`, port: '5002', color: 'var(--accent2)' },
-      { name: 'Order Service', url: `${SERVICES.order}/orders/health`, port: '5003', color: 'var(--accent3)' },
-      { name: 'Payment Service', url: `${SERVICES.payment}/payments/health`, port: '5004', color: 'var(--warning)' }
-    ];
-    const grid = document.getElementById('health-grid');
-    grid.innerHTML = '';
-    for (const s of services) {
-      let ok = false, msg = '';
-      try { const r = await fetch(s.url); const d = await r.json(); ok = r.ok; msg = d.status || 'OK'; } catch { msg = 'Unreachable'; }
-      grid.innerHTML += `
-        <div class="card" style="border-top:2px solid ${ok ? 'var(--success)' : 'var(--error)'}">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-            <div style="font-weight:700;font-size:1rem">${s.name}</div>
-            <span class="badge ${ok ? 'badge-green' : 'badge-pink'}">${ok ? '● ONLINE' : '● OFFLINE'}</span>
-          </div>
-          <div style="font-family:'Space Mono',monospace;font-size:0.65rem;color:var(--text-muted);line-height:2">
-            PORT &nbsp;&nbsp; :${s.port}<br>
-            STATUS &nbsp;${msg}<br>
-            PING &nbsp;&nbsp; ${ok ? '<span style="color:var(--success)">responded OK</span>' : '<span style="color:var(--error)">no response</span>'}
-          </div>
-        </div>`;
-    }
-  }
+function sbadge(s){const m={pending:'b-gray',payment_confirmed:'b-gold',processing:'b-blue',shipped:'b-blue',delivered:'b-green',cancelled:'b-red'};return `<span class="badge ${m[s]||'b-gray'}">${s}</span>`;}
 </script>
 </body>
 </html>

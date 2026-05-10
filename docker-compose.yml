@@ -1,39 +1,25 @@
-services:
+version: '3.8'
 
+services:
   postgres:
     image: postgres:15
     container_name: cloudcommerce-db
+    env_file: .env
     environment:
-      POSTGRES_DB: cloudcommerce
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data  
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - cloudnet
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d cloudcommerce"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
-
-  nginx:
-    image: nginx:latest
-    container_name: api-gateway
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./frontend:/usr/share/nginx/html:ro
-    depends_on:
-      - user-service
-      - product-service
-      - order-service
-      - payment-service
-    networks:
-      - cloudnet
 
   redis:
     image: redis:7
@@ -48,12 +34,13 @@ services:
     container_name: user-service
     ports:
       - "5001:5001"
+    env_file: .env
     environment:
       DB_HOST: postgres
-      DB_NAME: cloudcommerce
-      DB_USER: admin
-      DB_PASSWORD: secret
-      SECRET_KEY: supersecretkey
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      SECRET_KEY: ${SECRET_KEY}
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,18 +57,60 @@ services:
     container_name: product-service
     ports:
       - "5002:5002"
+    env_file: .env
     environment:
       DB_HOST: postgres
-      DB_NAME: cloudcommerce
-      DB_USER: admin
-      DB_PASSWORD: secret
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: redis
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET}
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_started
     networks:
       - cloudnet
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  cart-service:
+    build: ./cart-service
+    container_name: cart-service
+    ports:
+      - "5005:5005"
+    env_file: .env
+    environment:
+      REDIS_HOST: redis
+    depends_on:
+      redis:
+        condition: service_started
+    networks:
+      - cloudnet
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5005/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    ports:
+      - "5008:5008"
+    env_file: .env
+    environment:
+      RESEND_API_KEY: ${RESEND_API_KEY}
+    networks:
+      - cloudnet
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5008/health"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -91,21 +120,23 @@ services:
     container_name: order-service
     ports:
       - "5003:5003"
+    env_file: .env
+    volumes:
+      - ./firebase-key.json:/app/firebase-key.json:ro
     environment:
       DB_HOST: postgres
-      DB_NAME: cloudcommerce
-      DB_USER: admin
-      DB_PASSWORD: secret
-      SECRET_KEY: supersecretkey
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      SECRET_KEY: ${SECRET_KEY}
       USER_SERVICE_URL: http://user-service:5001
       PRODUCT_SERVICE_URL: http://product-service:5002
+      CART_SERVICE_URL: http://cart-service:5005
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      FIREBASE_DB_URL: ${FIREBASE_DB_URL}
     depends_on:
       postgres:
         condition: service_healthy
-      user-service:
-        condition: service_started
-      product-service:
-        condition: service_started
     networks:
       - cloudnet
     healthcheck:
@@ -113,12 +144,27 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-  
+
   payment-service:
     build: ./payment-service
     container_name: payment-service
     ports:
       - "5004:5004"
+    env_file: .env
+    volumes:
+      - ./firebase-key.json:/app/firebase-key.json:ro
+    environment:
+      DB_HOST: postgres
+      DB_NAME: ${POSTGRES_DB}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      ORDER_SERVICE_URL: http://order-service:5003
+      FIREBASE_DB_URL: ${FIREBASE_DB_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - cloudnet
     healthcheck:
@@ -131,12 +177,19 @@ services:
     image: nginx:latest
     container_name: frontend
     ports:
-      - "8080:80"
+      - "80:80"
     volumes:
-      - ./frontend:/usr/share/nginx/html
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend:/usr/share/nginx/html:ro
     networks:
       - cloudnet
-      
+    depends_on:
+      - user-service
+      - product-service
+      - order-service
+      - payment-service
+      - cart-service
+
 networks:
   cloudnet:
     driver: bridge

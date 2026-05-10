@@ -2,3 +2,5 @@ flask
 psycopg2-binary
 requests
 PyJWT
+stripe
+firebase-admin
