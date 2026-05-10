@@ -11,7 +11,6 @@
     &nbsp;·&nbsp;
     <a href="https://github.com/Malik-Ahmed-Abdullah/cloud-commerce/issues">Report Bug</a>
     &nbsp;·&nbsp;
-    <a href="https://github.com/Malik-Ahmed-Abdullah/cloud-commerce/issues">Request Feature</a>
   </p>
 </div>
 
