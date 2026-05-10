@@ -288,8 +288,7 @@ Contributions are welcome. If you have a suggestion that would improve the proje
 ---
 
 ## License
-
-No license has been added yet. If you plan to publish this publicly, add one before accepting external contributions. See [choosealicense.com](https://choosealicense.com) for options.
+MIT
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
